@@ -30,6 +30,8 @@
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #endif
 
+
+#define CPPREST_STDLIB_UNICODE_CONVERSIONS
 // Could use C++ standard library if not __GLIBCXX__,
 // For testing purposes we just the handwritten on all platforms.
 #if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
@@ -271,7 +273,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
 #if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
     std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
-    return conversion.from_bytes(src);
+    return conversion.from_bytes(s);
 #else
     utf16string dest;
     // Save repeated heap allocations, use less than source string size assuming some
@@ -352,8 +354,18 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
 {
  #if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
-     std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
-     return conversion.to_bytes(w);
+    try
+    {
+        std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
+        return conversion.to_bytes(w);
+    }
+    catch (std::range_error& exception)
+    {
+        std::cout << exception.what();
+    }
+    
+    return "**ERROR_PROCESSING_CONTENT**";
+    
  #else
     std::string dest;
     dest.reserve(w.size());
@@ -365,12 +377,12 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             const auto highSurrogate = *src++;
             if (src == w.end())
             {
-                throw std::range_error("UTF-16 string is missing low surrogate");
+                throw std::range_error("UTF-16 string has missing low *** surrogate");
             }
             const auto lowSurrogate = *src;
             if (lowSurrogate < L_SURROGATE_START || lowSurrogate > L_SURROGATE_END)
             {
-                throw std::range_error("UTF-16 string has invalid low surrogate");
+                throw std::range_error("UTF-16 string has invalid low *** surrogate");
             }
 
             // To get from surrogate pair to Unicode code point:
@@ -381,7 +393,7 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             uint32_t codePoint = highSurrogate - H_SURROGATE_START;
             codePoint <<= 10;
             codePoint |= lowSurrogate - L_SURROGATE_START;
-            codePoint |= SURROGATE_PAIR_START;
+            codePoint += SURROGATE_PAIR_START;
 
             // 4 bytes need using 21 bits
             dest.push_back(char((codePoint >> 18) | 0xF0));                 // leading 3 bits
