@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Peter Thorson. All rights reserved.
+ * Copyright (c) 2016, Colie McGarry. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -25,52 +25,25 @@
  *
  */
 
-#ifndef WEBSOCKETPP_CONFIG_ASIO_CLIENT_HPP
-#define WEBSOCKETPP_CONFIG_ASIO_CLIENT_HPP
+#ifndef WEBSOCKETPP_HTTP_PROXY_AUTH_HPP
+#define WEBSOCKETPP_HTTP_PROXY_AUTH_HPP
 
-#include <websocketpp/config/core_client.hpp>
-#include <websocketpp/transport/asio/endpoint.hpp>
+#include <string>
 
 namespace websocketpp {
-namespace config {
+namespace http {
+namespace proxy {
 
-/// Client config with asio transport and TLS disabled
-struct asio_client : public core_client {
-    typedef asio_client type;
-    typedef core_client base;
+class proxy_auth {
+public:
+    virtual ~proxy_auth() = default;
 
-    typedef base::concurrency_type concurrency_type;
-
-    typedef base::request_type request_type;
-    typedef base::response_type response_type;
-
-    typedef base::message_type message_type;
-    typedef base::con_msg_manager_type con_msg_manager_type;
-    typedef base::endpoint_msg_manager_type endpoint_msg_manager_type;
-
-    typedef base::alog_type alog_type;
-    typedef base::elog_type elog_type;
-
-    typedef base::rng_type rng_type;
-
-    typedef base::proxy_auth_type proxy_auth_type;
-
-    struct transport_config : public base::transport_config {
-        typedef type::concurrency_type concurrency_type;
-        typedef type::alog_type alog_type;
-        typedef type::elog_type elog_type;
-        typedef type::request_type request_type;
-        typedef type::response_type response_type;
-        typedef websocketpp::transport::asio::basic_socket::endpoint
-            socket_type;
-        typedef type::proxy_auth_type proxy_auth_type;
-    };
-
-    typedef websocketpp::transport::asio::endpoint<transport_config>
-        transport_type;
+    virtual std::string next_auth_token(const std::string& proxy_authenticate_header) = 0;
 };
 
-} // namespace config
+} // namespace proxy
+
+} // namespace http
 } // namespace websocketpp
 
-#endif // WEBSOCKETPP_CONFIG_ASIO_CLIENT_HPP
+#endif // WEBSOCKETPP_COMMON_ASIO_HPP

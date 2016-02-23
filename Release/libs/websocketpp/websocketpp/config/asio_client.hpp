@@ -56,6 +56,8 @@ struct asio_tls_client : public core_client {
     typedef base::alog_type alog_type;
     typedef base::elog_type elog_type;
 
+    typedef base::proxy_auth_type proxy_auth_type;
+
     typedef base::rng_type rng_type;
 
     struct transport_config : public base::transport_config {
@@ -65,6 +67,7 @@ struct asio_tls_client : public core_client {
         typedef type::request_type request_type;
         typedef type::response_type response_type;
         typedef websocketpp::transport::asio::tls_socket::endpoint socket_type;
+        typedef type::proxy_auth_type proxy_auth_type;
     };
 
     typedef websocketpp::transport::asio::endpoint<transport_config>

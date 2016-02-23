@@ -79,6 +79,8 @@ public:
     typedef typename config::alog_type alog_type;
     /// Type of this transport's error logging policy
     typedef typename config::elog_type elog_type;
+    /// Type of the transport's proxy authorization policy
+    typedef typename config::proxy_auth_type proxy_auth_type;
 
     typedef typename config::request_type request_type;
     typedef typename request_type::ptr request_ptr;
@@ -91,6 +93,8 @@ public:
     typedef lib::shared_ptr<lib::asio::io_service::strand> strand_ptr;
     /// Type of a pointer to the Asio timer class
     typedef lib::shared_ptr<lib::asio::steady_timer> timer_ptr;
+
+    typedef lib::shared_ptr<proxy_auth_type> proxy_auth_type_ptr;
 
     // connection is friends with its associated endpoint to allow the endpoint
     // to call private/protected utility methods that we don't want to expose
@@ -186,18 +190,29 @@ public:
      *
      * @param ec A status value
      */
-    void set_proxy(std::string const & uri, lib::error_code & ec) {
+    void set_proxy(std::string const & uri, proxy_auth_type_ptr proxy_auth, lib::error_code & ec) {
         // TODO: return errors for illegal URIs here?
         // TODO: should https urls be illegal for the moment?
         m_proxy = uri;
-        m_proxy_data = lib::make_shared<proxy_data>();
+        m_proxy_data = lib::make_shared<proxy_data>(proxy_auth);
         ec = lib::error_code();
+    }
+
+    /// Set the proxy to connect through (exception)
+    void set_proxy(std::string const & uri, proxy_auth_type_ptr proxy_auth) {
+        lib::error_code ec;
+        set_proxy(uri, proxy_auth, ec);
+        if (ec) { throw exception(ec); }
+    }
+
+    void set_proxy(std::string const & uri, lib::error_code & ec) {
+        set_proxy(uri, nullptr, ec);
     }
 
     /// Set the proxy to connect through (exception)
     void set_proxy(std::string const & uri) {
         lib::error_code ec;
-        set_proxy(uri,ec);
+        set_proxy(uri, nullptr, ec);
         if (ec) { throw exception(ec); }
     }
 
@@ -785,6 +800,23 @@ protected:
 
             m_alog.write(log::alevel::devel,m_proxy_data->res.raw());
 
+            if (m_proxy_data->res.get_status_code() == http::status_code::proxy_authentication_required && m_proxy_data->proxy_auth) {
+                std::string proxy_authenticate_header = "Proxy-Authenticate";
+
+                auto auth_header = m_proxy_data->res.get_header(proxy_authenticate_header);
+
+                auto new_auth_header = m_proxy_data->proxy_auth->next_auth_token(auth_header);
+
+                if (!new_auth_header.empty())
+                {
+                    m_proxy_data->req.replace_header(proxy_authenticate_header, new_auth_header);
+
+                    proxy_write(callback);
+
+                    return;
+                }
+            }
+
             if (m_proxy_data->res.get_status_code() != http::status_code::ok) {
                 // got an error response back
                 // TODO: expose this error in a programmatically accessible way?
@@ -1165,7 +1197,9 @@ private:
     elog_type& m_elog;
 
     struct proxy_data {
-        proxy_data() : timeout_proxy(config::timeout_proxy) {}
+        proxy_data(proxy_auth_type_ptr proxy_auth) : 
+            proxy_auth(proxy_auth),
+            timeout_proxy(config::timeout_proxy) {}
 
         request_type req;
         response_type res;
@@ -1173,6 +1207,7 @@ private:
         lib::asio::streambuf read_buf;
         long timeout_proxy;
         timer_ptr timer;
+        proxy_auth_type_ptr proxy_auth;
     };
 
     std::string m_proxy;

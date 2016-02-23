@@ -46,6 +46,7 @@
 // HTTP
 #include <websocketpp/http/request.hpp>
 #include <websocketpp/http/response.hpp>
+#include <websocketpp/http/proxy_auth.hpp>
 
 // Messages
 #include <websocketpp/message_buffer/message.hpp>
@@ -99,6 +100,9 @@ struct core_client {
     /// RNG policies
     typedef websocketpp::random::random_device::int_generator<uint32_t,
         concurrency_type> rng_type;
+
+    /// Proxy token policy
+    typedef websocketpp::http::proxy::proxy_auth proxy_auth_type;
 
     /// Controls compile time enabling/disabling of thread syncronization code
     /// Disabling can provide a minor performance improvement to single threaded

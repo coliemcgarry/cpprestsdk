@@ -53,6 +53,8 @@ struct asio : public core {
 
     typedef base::rng_type rng_type;
 
+    typedef base::proxy_auth_type proxy_auth_type;
+
     struct transport_config : public base::transport_config {
         typedef type::concurrency_type concurrency_type;
         typedef type::alog_type alog_type;
