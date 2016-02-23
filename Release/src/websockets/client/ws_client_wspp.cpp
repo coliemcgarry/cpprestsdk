@@ -57,6 +57,8 @@
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
 
+#include "cpprest/details/http_proxy_auth.h"
+
 #if defined(_WIN32)
 #pragma warning( pop )
 #endif
@@ -324,6 +326,8 @@ public:
         const auto &proxy = m_config.proxy();
         if (proxy.is_specified())
         {
+            auto proxy_auth = web::http::client::details::getProxyAuth();
+
             con->set_proxy(utility::conversions::to_utf8string(proxy.address().to_string()), ec);
             if (ec)
             {

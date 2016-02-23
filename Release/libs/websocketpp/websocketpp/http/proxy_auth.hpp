@@ -28,6 +28,8 @@
 #ifndef WEBSOCKETPP_HTTP_PROXY_AUTH_HPP
 #define WEBSOCKETPP_HTTP_PROXY_AUTH_HPP
 
+#include <websocketpp/common/memory.hpp>
+
 #include <string>
 
 namespace websocketpp {
@@ -40,6 +42,8 @@ public:
 
     virtual std::string next_auth_token(const std::string& proxy_authenticate_header) = 0;
 };
+
+typedef websocketpp::lib::shared_ptr<proxy_auth> proxy_auth_ptr;
 
 } // namespace proxy
 
