@@ -161,7 +161,10 @@ typedef lib::function<void(lib::error_code const & ec)> write_frame_handler;
      * @todo Move this to configs to allow compile/runtime disabling or enabling
      * of protocol versions
      */
-    static std::vector<int> const versions_supported = {0,7,8,13};
+#pragma warning(push)
+#pragma warning(disable:4592)
+    static std::vector<int> const versions_supported = { 0,7,8,13 };
+#pragma warning(pop)
 #else
     /// Helper array to get around lack of initializer lists pre C++11
     static int const helper[] = {0,7,8,13};

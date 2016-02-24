@@ -38,6 +38,7 @@
 #include <websocketpp/base64/base64.hpp>
 #include <websocketpp/error.hpp>
 #include <websocketpp/uri.hpp>
+#include <websocketpp/proxy_auth_session.hpp>
 
 #include <websocketpp/common/asio.hpp>
 #include <websocketpp/common/chrono.hpp>
@@ -56,6 +57,7 @@ namespace transport {
 namespace asio {
 
 typedef lib::function<void(connection_hdl)> tcp_init_handler;
+typedef lib::function <websocketpp::proxy::proxy_auth_session::ptr()> proxy_auth_handler;
 
 /// Asio based connection transport component
 /**
@@ -91,6 +93,8 @@ public:
     typedef lib::shared_ptr<lib::asio::io_service::strand> strand_ptr;
     /// Type of a pointer to the Asio timer class
     typedef lib::shared_ptr<lib::asio::steady_timer> timer_ptr;
+
+    typedef lib::shared_ptr<websocketpp::proxy::proxy_auth_session> proxy_auth_session_ptr;
 
     // connection is friends with its associated endpoint to allow the endpoint
     // to call private/protected utility methods that we don't want to expose
@@ -200,6 +204,16 @@ public:
         set_proxy(uri,ec);
         if (ec) { throw exception(ec); }
     }
+
+    void set_proxy_auth_handler(proxy_auth_session_ptr h) {
+        m_proxy_auth_handler = h;
+    }
+
+    /// Proxy Authentication Handler
+    //class proxy_auth_session;
+    //typedef lib::shared_ptr<proxy_auth_session> proxy_auth_session_ptr;
+
+    //typedef lib::function<proxy_auth_session_ptr()> proxy_auth_handler;
 
     /// Set the basic auth credentials to use (exception free)
     /**
@@ -785,8 +799,31 @@ protected:
 
             m_alog.write(log::alevel::devel,m_proxy_data->res.raw());
 
+            if (m_proxy_data->res.get_status_code() == http::status_code::proxy_authentication_required && m_proxy_auth_handler) {
+                if (!m_proxy_data->proxy_auth_session) {
+                    m_proxy_data->proxy_auth_session = m_proxy_auth_handler();
+                }
+
+                if (m_proxy_data->proxy_auth_session) {
+                    std::string proxy_authenticate_header = "Proxy-Authenticate";
+
+                    auto auth_header = m_proxy_data->res.get_header(proxy_authenticate_header);
+
+                    auto new_auth_header = m_proxy_data->proxy_auth_session->next_auth_token(auth_header);
+
+                    if (!new_auth_header.empty())
+                    {
+                        m_proxy_data->req.replace_header(proxy_authenticate_header, new_auth_header);
+
+                        proxy_write(callback);
+
+                        return;
+                    }
+                }
+            }
+
             if (m_proxy_data->res.get_status_code() != http::status_code::ok) {
-                // got an error response back
+                    // got an error response back
                 // TODO: expose this error in a programmatically accessible way?
                 // if so, see below for an option on how to do this.
                 std::stringstream s;
@@ -1173,10 +1210,12 @@ private:
         lib::asio::streambuf read_buf;
         long timeout_proxy;
         timer_ptr timer;
+        proxy_auth_session_ptr proxy_auth_session;
     };
 
     std::string m_proxy;
     lib::shared_ptr<proxy_data> m_proxy_data;
+    proxy_auth_handler m_proxy_auth_handler;
 
     // transport resources
     io_service_ptr  m_io_service;
