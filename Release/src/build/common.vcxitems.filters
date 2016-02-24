@@ -67,6 +67,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_proxy_auth.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
@@ -207,6 +210,9 @@
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\resource.h">
+      <Filter>Header Files\cpprest\details</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_proxy_auth.h">
       <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
   </ItemGroup>

@@ -16,6 +16,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_client_msg.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_proxy_auth.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\common\http_helpers.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\common\http_msg.cpp" />
@@ -53,10 +54,11 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\fileio.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_client_impl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_helpers.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_proxy_auth.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server_api.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\nosal.h" />
-	<ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\resource.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\resource.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\SafeInt3.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\uri_parser.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\web_utilities.h" />

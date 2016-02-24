@@ -94,7 +94,7 @@ public:
     /// Type of a pointer to the Asio timer class
     typedef lib::shared_ptr<lib::asio::steady_timer> timer_ptr;
 
-    typedef lib::shared_ptr<websocketpp::proxy::proxy_auth_session> proxy_auth_session_ptr;
+    //typedef lib::shared_ptr<websocketpp::proxy::proxy_auth_session> proxy_auth_session_ptr;
 
     // connection is friends with its associated endpoint to allow the endpoint
     // to call private/protected utility methods that we don't want to expose
@@ -205,7 +205,7 @@ public:
         if (ec) { throw exception(ec); }
     }
 
-    void set_proxy_auth_handler(proxy_auth_session_ptr h) {
+    void set_proxy_auth_handler(proxy_auth_handler h) {
         m_proxy_auth_handler = h;
     }
 
@@ -822,6 +822,8 @@ protected:
                 }
             }
 
+            m_proxy_data->proxy_auth_session.reset();
+
             if (m_proxy_data->res.get_status_code() != http::status_code::ok) {
                     // got an error response back
                 // TODO: expose this error in a programmatically accessible way?
@@ -1210,7 +1212,7 @@ private:
         lib::asio::streambuf read_buf;
         long timeout_proxy;
         timer_ptr timer;
-        proxy_auth_session_ptr proxy_auth_session;
+        proxy::proxy_auth_session::ptr proxy_auth_session;
     };
 
     std::string m_proxy;

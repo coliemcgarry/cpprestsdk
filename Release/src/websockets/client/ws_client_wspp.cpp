@@ -63,6 +63,8 @@
 
 #endif /* __GNUC__ */
 
+#include "cpprest/details/http_proxy_auth.h"
+
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
@@ -342,6 +344,10 @@ public:
                     return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "set_proxy_basic_auth")));
                 }
             }
+
+            websocketpp::transport::asio::proxy_auth_handler testx = web::http::client::details::proxy_auth_handler;
+
+            con->set_proxy_auth_handler(testx);
         }
 
         m_state = CONNECTING;
@@ -778,3 +784,4 @@ websocket_callback_client::websocket_callback_client(websocket_client_config con
 }}}
 
 #endif
+
