@@ -29,9 +29,28 @@
 
 namespace web { namespace http { namespace client { namespace details {
 
+#ifdef _WIN32
+    class ProxyAuth : public websocketpp::http::proxy::proxy_auth
+    {
+    public:
+        std::string next_auth_token(const std::string&)
+        {
+            return "";
+        }
+
+    };
+#endif
+
+
 websocketpp::http::proxy::proxy_auth_ptr getProxyAuth()
 {
-    return websocketpp::http::proxy::proxy_auth_ptr();
+    websocketpp::http::proxy::proxy_auth_ptr result;
+
+#ifdef _WIN32
+    result = std::make_shared<ProxyAuth>();
+#endif
+    
+    return result;
 }
 
 }}}}
