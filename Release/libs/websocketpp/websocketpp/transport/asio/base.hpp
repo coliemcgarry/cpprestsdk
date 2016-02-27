@@ -177,7 +177,10 @@ enum value {
     proxy_invalid,
 
     /// Invalid host or service
-    invalid_host_service
+    invalid_host_service,
+
+    /// Reconnection required
+    proxy_reconnect,
 };
 
 /// Asio transport error category

@@ -150,6 +150,13 @@ typedef lib::function<bool(connection_hdl)> validate_handler;
  */
 typedef lib::function<void(connection_hdl)> http_handler;
 
+/// Proxy Authorizatoin Handler
+/**
+ * This handler must build a proxy authentication object, disconnect and 
+ * reconnect using the created proxy authentication object.
+ */
+typedef lib::function<void(const std::string&, const std::string&)> proxy_auth_handler;
+
 //
 typedef lib::function<void(lib::error_code const & ec, size_t bytes_transferred)> read_handler;
 typedef lib::function<void(lib::error_code const & ec)> write_frame_handler;
@@ -296,6 +303,7 @@ private:
     enum terminate_status {
         failed = 1,
         closed,
+        proxy_reconnect,
         unknown
     };
 public:
@@ -478,6 +486,10 @@ public:
      */
     void set_message_handler(message_handler h) {
         m_message_handler = h;
+    }
+
+    void set_proxy_auth_handler(proxy_auth_handler h) {
+        m_proxy_auth_handler = h;
     }
 
     //////////////////////////////////////////
@@ -1516,6 +1528,7 @@ private:
     http_handler            m_http_handler;
     validate_handler        m_validate_handler;
     message_handler         m_message_handler;
+    proxy_auth_handler      m_proxy_auth_handler;
 
     /// constant values
     long                    m_open_handshake_timeout_dur;

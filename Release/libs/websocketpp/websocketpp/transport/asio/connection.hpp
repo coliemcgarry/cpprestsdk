@@ -205,6 +205,12 @@ public:
         if (ec) { throw exception(ec); }
     }
 
+    void set_proxy_authenticator(proxy_authenticator_ptr p) {
+        if (m_proxy_data) {
+            m_proxy_data->proxy_authenticator = p;
+        }
+    }
+
     /// Set the basic auth credentials to use (exception free)
     /**
      * The URI passed should be a complete URI including scheme. For example:
@@ -798,7 +804,7 @@ protected:
 
             m_alog.write(log::alevel::devel,m_proxy_data->res.raw());
 
-            if (m_proxy_data->res.get_status_code() != http::status_code::proxy_authentication_required) {
+            if (m_proxy_data->res.get_status_code() == http::status_code::proxy_authentication_required) {
                 m_elog.write(log::elevel::info, "Proxy authorization Required");
 
                 auto auth_headers = m_proxy_data->res.get_header("Proxy-Authorization");
