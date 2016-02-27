@@ -161,7 +161,10 @@ typedef lib::function<void(lib::error_code const & ec)> write_frame_handler;
      * @todo Move this to configs to allow compile/runtime disabling or enabling
      * of protocol versions
      */
+#pragma warning(push)
+#pragma warning(disable:4592)
     static std::vector<int> const versions_supported = {0,7,8,13};
+#pragma warning(pop)
 #else
     /// Helper array to get around lack of initializer lists pre C++11
     static int const helper[] = {0,7,8,13};
@@ -270,6 +273,9 @@ public:
 
     typedef typename config::con_msg_manager_type con_msg_manager_type;
     typedef typename con_msg_manager_type::ptr con_msg_manager_ptr;
+
+    typedef typename config::proxy_authenticator_type proxy_authenticator_type;
+    //typedef typename proxy_authenticator_type::ptr proxy_authenticator_ptr;
 
     /// Type of RNG
     typedef typename config::rng_type rng_type;

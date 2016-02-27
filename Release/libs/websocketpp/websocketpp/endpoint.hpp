@@ -69,6 +69,9 @@ public:
     /// Type of message pointers that this endpoint uses
     typedef typename connection_type::message_ptr message_ptr;
 
+    /// Type of reconnect handler (invoked if reconect required)
+    //typedef typename connection_type::reconnect_handler reconnect_handler;
+
     /// Type of error logger
     typedef typename config::elog_type elog_type;
     /// Type of access logger
@@ -324,6 +327,11 @@ public:
         scoped_lock_type guard(m_mutex);
         m_message_handler = h;
     }
+    //void set_reconnect_handler(reconnect_handler h) {
+    //    m_alog.write(log::alevel::devel, "set_reconnect_handler");
+    //    scoped_lock_type guard(m_mutex);
+    //    m_reconnect_handler = h;
+    //}
 
     //////////////////////////////////////////
     // Connection timeouts and other limits //

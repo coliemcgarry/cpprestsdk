@@ -25,52 +25,38 @@
  *
  */
 
-#ifndef WEBSOCKETPP_CONFIG_ASIO_CLIENT_HPP
-#define WEBSOCKETPP_CONFIG_ASIO_CLIENT_HPP
+#ifndef HTTP_PROXY_AUTHENTICATOR_HPP
+#define HTTP_PROXY_AUTHENTICATOR_HPP
 
-#include <websocketpp/config/core_client.hpp>
-#include <websocketpp/transport/asio/endpoint.hpp>
+#include <string>
+
+//#include <websocketpp/http/response.hpp>
 
 namespace websocketpp {
-namespace config {
+namespace http {
+namespace proxy {
 
-/// Client config with asio transport and TLS disabled
-struct asio_client : public core_client {
-    typedef asio_client type;
-    typedef core_client base;
+/// Implements Proxy Authentication 
+/**
+ *
+ */
+class proxy_authenticator {
+public:
+    typedef lib::shared_ptr<proxy_authenticator> ptr;
 
-    typedef base::concurrency_type concurrency_type;
+    std::string next_token(const std::string& auth_headers) {
+        return "";
+    }
 
-    typedef base::request_type request_type;
-    typedef base::response_type response_type;
-
-    typedef base::message_type message_type;
-    typedef base::con_msg_manager_type con_msg_manager_type;
-    typedef base::endpoint_msg_manager_type endpoint_msg_manager_type;
-
-    typedef base::alog_type alog_type;
-    typedef base::elog_type elog_type;
-
-    typedef base::rng_type rng_type;
-
-    typedef base::proxy_authenticator_type proxy_authenticator_type;
-
-    struct transport_config : public base::transport_config {
-        typedef type::concurrency_type concurrency_type;
-        typedef type::alog_type alog_type;
-        typedef type::elog_type elog_type;
-        typedef type::request_type request_type;
-        typedef type::response_type response_type;
-        typedef websocketpp::transport::asio::basic_socket::endpoint
-            socket_type;
-        typedef type::proxy_authenticator_type proxy_authenticator_type;
-    };
-
-    typedef websocketpp::transport::asio::endpoint<transport_config>
-        transport_type;
+    std::string get_auth_token() {
+        return"";
+    }
 };
 
-} // namespace config
+} // namespace proxy
+} // namespace http
 } // namespace websocketpp
 
-#endif // WEBSOCKETPP_CONFIG_ASIO_CLIENT_HPP
+//#include <websocketpp/http/impl/proxy_authenticator.hpp>
+
+#endif // HTTP_PROXY_AUTHENTICATOR_HPP

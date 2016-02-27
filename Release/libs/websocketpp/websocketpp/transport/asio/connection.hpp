@@ -92,6 +92,10 @@ public:
     /// Type of a pointer to the Asio timer class
     typedef lib::shared_ptr<lib::asio::steady_timer> timer_ptr;
 
+    /// Type of proxy authentication policy
+    typedef typename config::proxy_authenticator_type proxy_authenticator_type;
+    typedef typename proxy_authenticator_type::ptr proxy_authenticator_ptr;
+
     // connection is friends with its associated endpoint to allow the endpoint
     // to call private/protected utility methods that we don't want to expose
     // to the public api.
@@ -444,6 +448,15 @@ protected:
         m_proxy_data->req.set_uri(authority);
         m_proxy_data->req.replace_header("Host",authority);
 
+        if (m_proxy_data->proxy_authenticator) {
+
+            auto auth_token = m_proxy_data->proxy_authenticator->get_auth_token();
+
+            if (!auth_token.empty()) {
+                m_proxy_data->req.append_header("Proxy-Authorization", auth_token);
+            }
+        }
+
         return lib::error_code();
     }
 
@@ -784,6 +797,31 @@ protected:
             }
 
             m_alog.write(log::alevel::devel,m_proxy_data->res.raw());
+
+            if (m_proxy_data->res.get_status_code() != http::status_code::proxy_authentication_required) {
+                m_elog.write(log::elevel::info, "Proxy authorization Required");
+
+                auto auth_headers = m_proxy_data->res.get_header("Proxy-Authorization");
+
+                if (m_proxy_data->proxy_authenticator) {
+
+                    auto next_token = m_proxy_data->proxy_authenticator->next_token(auth_headers);
+
+                    if (!next_token.empty()) {
+                        m_proxy_data->req.append_header("Proxy-Authorization", next_token);
+
+                        proxy_write(callback);
+                        return;
+                    }
+                }
+                else {
+                    // Signal to client code to client code that proxy auth is required, close and open the connection and build a proxy_authenticator
+                    // TO DO!!!
+                }
+
+                callback(make_error_code(error::proxy_failed));
+                return;
+            }
 
             if (m_proxy_data->res.get_status_code() != http::status_code::ok) {
                 // got an error response back
@@ -1173,6 +1211,7 @@ private:
         lib::asio::streambuf read_buf;
         long timeout_proxy;
         timer_ptr timer;
+        proxy_authenticator_ptr proxy_authenticator;
     };
 
     std::string m_proxy;
