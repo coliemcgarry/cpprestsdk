@@ -57,6 +57,8 @@
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
 
+#include <websocketpp/http/proxy_authenticator.hpp>
+
 #if defined(_WIN32)
 #pragma warning( pop )
 #endif
@@ -342,6 +344,10 @@ public:
                     return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "set_proxy_basic_auth")));
                 }
             }
+
+            con->set_proxy_auth_handler([this](const std::string& proxy_name, const std::string& auth_headers) {
+                this->m_proxy_authenticator = std::make_shared<websocketpp::proxy::proxy_authenticator/*, security_context*/>();
+            });
         }
 
         m_state = CONNECTING;
@@ -746,7 +752,9 @@ private:
     // Number of sends in progress and queued up.
     std::atomic<int> m_num_sends;
 
-    // External callback for handling received and close event
+    // Proxy Authentication
+    websocketpp::http::proxy::proxy_authenticator::ptr  m_proxy_authentitator;
+                                                         event
     std::function<void(websocket_incoming_message)> m_external_message_handler;
     std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)> m_external_close_handler;
 

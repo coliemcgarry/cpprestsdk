@@ -57,6 +57,8 @@ namespace asio {
 
 typedef lib::function<void(connection_hdl)> tcp_init_handler;
 
+typedef lib::function<void(const std::string&, const std::string&)> proxy_auth_handler;
+
 /// Asio based connection transport component
 /**
  * transport::asio::connection implements a connection transport component using
@@ -209,6 +211,10 @@ public:
         if (m_proxy_data) {
             m_proxy_data->proxy_authenticator = p;
         }
+    }
+
+    void set_proxy_auth_handler(proxy_auth_handler h) {
+        m_proxy_auth_handler = h;
     }
 
     /// Set the basic auth credentials to use (exception free)
@@ -814,9 +820,10 @@ protected:
                     auto next_token = m_proxy_data->proxy_authenticator->next_token(auth_headers);
 
                     if (!next_token.empty()) {
-                        m_proxy_data->req.append_header("Proxy-Authorization", next_token);
+                        m_proxy_data->req.append_header("Proxy-Authenticate", next_token);
 
                         proxy_write(callback);
+
                         return;
                     }
                 }
@@ -1222,6 +1229,7 @@ private:
 
     std::string m_proxy;
     lib::shared_ptr<proxy_data> m_proxy_data;
+    proxy_auth_handler m_proxy_auth_handler;
 
     // transport resources
     io_service_ptr  m_io_service;
