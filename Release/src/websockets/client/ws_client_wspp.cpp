@@ -326,28 +326,29 @@ public:
         const auto &proxy = m_config.proxy();
         if (proxy.is_specified())
         {
-            con->set_proxy(utility::conversions::to_utf8string(proxy.address().to_string()), ec);
-            if (ec)
-            {
-                return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "set_proxy")));
-            }
+            client.set_proxy(utility::conversions::to_utf8string(proxy.address().to_string()));
 
-            const auto &cred = proxy.credentials();
-            if (cred.is_set())
-            {
-                con->set_proxy_basic_auth(
-                    utility::conversions::to_utf8string(cred.username()),
-                    utility::conversions::to_utf8string(*cred.decrypt()),
-                    ec);
-                if (ec)
-                {
-                    return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "set_proxy_basic_auth")));
-                }
-            }
+            //con->set_proxy(utility::conversions::to_utf8string(proxy.address().to_string()), ec);
+            //if (ec)
+            //{
+            //    return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "set_proxy")));
+            //}
 
-            //con->set_proxy_auth_handler([this](const std::string& proxy_name, const std::string& auth_headers) {
-            //    m_proxy_authenticator = std::make_shared<websocketpp::http::proxy::proxy_authenticator/*, security_context*/>(proxy_name, auth_headers);
-            //});
+            //
+            // To do: Move basic auth credentials inside the proxy_authenticator
+            //
+            //const auto &cred = proxy.credentials();
+            //if (cred.is_set())
+            //{
+            //    con->set_proxy_basic_auth(
+            //        utility::conversions::to_utf8string(cred.username()),
+            //        utility::conversions::to_utf8string(*cred.decrypt()),
+            //        ec);
+            //    if (ec)
+            //    {
+            //        return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "set_proxy_basic_auth")));
+            //    }
+            //}
         }
 
         m_state = CONNECTING;

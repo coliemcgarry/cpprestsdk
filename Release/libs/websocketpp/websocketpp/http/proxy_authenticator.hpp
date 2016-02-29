@@ -44,8 +44,11 @@ class proxy_authenticator {
 public:
     typedef lib::shared_ptr<proxy_authenticator> ptr;
 
-    void set_proxy(const std::string& name) {
-        proxy_name = name;
+    proxy_authenticator(const std::string& proxy) : m_proxy(proxy) {
+    }
+
+    std::string get_proxy() {
+        return m_proxy;
     }
 
     std::string next_token(const std::string& auth_headers) {
@@ -60,7 +63,7 @@ public:
     }
 
 private:
-    std::string proxy_name;
+    std::string m_proxy;
 };
 
 } // namespace proxy

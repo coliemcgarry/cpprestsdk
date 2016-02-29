@@ -206,6 +206,7 @@ public:
     }
 
     void set_proxy_authenticator(proxy_authenticator_ptr p) {
+        m_proxy = p->get_proxy();
         m_proxy_data = lib::make_shared<proxy_data>();
 
         if (m_proxy_data) {
