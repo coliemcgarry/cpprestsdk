@@ -88,6 +88,8 @@ public:
     // TODO: organize these
     typedef typename connection_type::termination_handler termination_handler;
 
+    typedef typename config::proxy_authenticator_type proxy_authenticator_type;
+
     // This would be ideal. Requires C++11 though
     //friend connection;
 
@@ -691,6 +693,8 @@ private:
     long                        m_pong_timeout_dur;
     size_t                      m_max_message_size;
     size_t                      m_max_http_body_size;
+
+    proxy_authenticator_type    m_proxy_authenticator;
 
     rng_type m_rng;
 
