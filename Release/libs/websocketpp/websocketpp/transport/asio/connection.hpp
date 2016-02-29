@@ -57,8 +57,6 @@ namespace asio {
 
 typedef lib::function<void(connection_hdl)> tcp_init_handler;
 
-typedef lib::function<void(const std::string&, const std::string&)> proxy_auth_handler;
-
 /// Asio based connection transport component
 /**
  * transport::asio::connection implements a connection transport component using
@@ -211,10 +209,6 @@ public:
         if (m_proxy_data) {
             m_proxy_data->proxy_authenticator = p;
         }
-    }
-
-    void set_proxy_auth_handler(proxy_auth_handler h) {
-        m_proxy_auth_handler = h;
     }
 
     /// Set the basic auth credentials to use (exception free)
@@ -810,6 +804,15 @@ protected:
 
             m_alog.write(log::alevel::devel,m_proxy_data->res.raw());
 
+            bool reconnect = false;
+
+            auto connection_header = m_proxy_data->res.get_header("Connection");
+
+            if (connection_header == "Close")
+            {
+                reconnect = true;
+            }
+
             if (m_proxy_data->res.get_status_code() == http::status_code::proxy_authentication_required) {
                 m_elog.write(log::elevel::info, "Proxy authorization Required");
 
@@ -819,7 +822,7 @@ protected:
 
                     auto next_token = m_proxy_data->proxy_authenticator->next_token(auth_headers);
 
-                    if (!next_token.empty()) {
+                    if (!next_token.empty() && !reconnect) {
                         m_proxy_data->req.append_header("Proxy-Authenticate", next_token);
 
                         proxy_write(callback);
@@ -827,13 +830,18 @@ protected:
                         return;
                     }
                 }
-                else {
-                    // Signal to client code to client code that proxy auth is required, close and open the connection and build a proxy_authenticator
-                    // TO DO!!!
+            }
+
+            if (m_proxy_data->proxy_authenticator) {
+                if (m_proxy_data->res.get_status_code() != http::status_code::ok) {
+                    m_proxy_data->proxy_authenticator->set_authenticated();
                 }
 
-                callback(make_error_code(error::proxy_failed));
-                return;
+                if (reconnect) {
+                    callback(make_error_code(error::proxy_reconnect));
+
+                    return;
+                }
             }
 
             if (m_proxy_data->res.get_status_code() != http::status_code::ok) {
@@ -1229,7 +1237,6 @@ private:
 
     std::string m_proxy;
     lib::shared_ptr<proxy_data> m_proxy_data;
-    proxy_auth_handler m_proxy_auth_handler;
 
     // transport resources
     io_service_ptr  m_io_service;

@@ -298,6 +298,9 @@ public:
     // Misc Convenience Types
     typedef session::internal_state::value istate_type;
 
+    // Reconnect handler (Signalled if we require a reconnection)
+    typedef lib::function<void(connection_hdl)> reconnect_handler;
+
 private:
     enum terminate_status {
         failed = 1,

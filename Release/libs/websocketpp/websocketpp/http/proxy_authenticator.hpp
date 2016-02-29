@@ -44,8 +44,13 @@ class proxy_authenticator {
 public:
     typedef lib::shared_ptr<proxy_authenticator> ptr;
 
+    proxy_authenticator(const std::string&, const std::string&) {}
+
     std::string next_token(const std::string& auth_headers) {
         return "";
+    }
+
+    void set_authenticated() {
     }
 
     std::string get_auth_token() {
