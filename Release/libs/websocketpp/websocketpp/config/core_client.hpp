@@ -48,6 +48,7 @@
 #include <websocketpp/http/response.hpp>
 
 // Proxy Authentication
+#include <websocketpp/common/security_context.hpp>
 #include <websocketpp/http/proxy_authenticator.hpp>
 
 // Messages
@@ -103,7 +104,8 @@ struct core_client {
     typedef websocketpp::random::random_device::int_generator<uint32_t,
         concurrency_type> rng_type;
 
-    typedef http::proxy::proxy_authenticator proxy_authenticator_type;
+    typedef websocketpp::lib::security::SecurityContext security_context;
+    typedef http::proxy::proxy_authenticator<security_context> proxy_authenticator_type;
 
     /// Controls compile time enabling/disabling of thread syncronization code
     /// Disabling can provide a minor performance improvement to single threaded

@@ -40,6 +40,7 @@ namespace proxy {
 /**
  *
  */
+template <typename SecurityContext>
 class proxy_authenticator {
 public:
     typedef lib::shared_ptr<proxy_authenticator> ptr;
@@ -56,6 +57,10 @@ public:
     }
 
     std::string next_token(const std::string& auth_headers) {
+        if (!security_context) {
+            security_context = lib::make_shared<SecurityContext>(m_proxy, auth_headers);
+        }
+
         auto result = currentToken >= 0 ? tokens[currentToken] : std::string();
 
         if(currentToken < 2)
@@ -78,6 +83,8 @@ private:
 
     std::vector<std::string> tokens;
     int currentToken = -1;
+
+    typename SecurityContext::Ptr security_context;
 };
 
 } // namespace proxy
