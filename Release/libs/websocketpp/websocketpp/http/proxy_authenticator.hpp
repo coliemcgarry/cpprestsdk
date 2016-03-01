@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Peter Thorson. All rights reserved.
+ * Copyright (c) 2016, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,68 +28,255 @@
 #ifndef HTTP_PROXY_AUTHENTICATOR_HPP
 #define HTTP_PROXY_AUTHENTICATOR_HPP
 
+//#include <string>
+//
+////#include <websocketpp/http/response.hpp>
+//
+//namespace websocketpp {
+//namespace http {
+//namespace proxy {
+//
+///// Implements Proxy Authentication 
+///**
+// *
+// */
+//template <typename SecurityContext>
+//class proxy_authenticator {
+//public:
+//    typedef lib::shared_ptr<proxy_authenticator> ptr;
+//
+//    proxy_authenticator(const std::string& proxy) : m_proxy(proxy) {
+//
+//        tokens.push_back("NTLM TlRMTVNTUAABAAAAB7IIogUABQA2AAAADgAOACgAAAAGAbEdAAAAD0NNQ0dBUlJZLUc2NVpIQ0lTQ08=");
+//        tokens.push_back("NTLM TlRMTVNTUAADAAAAAAAAAFgAAAAAAAAAWAAAAAAAAABYAAAAAAAAAFgAAAAAAAAAWAAAAAAAAABYAAAABcKIogYBsR0AAAAP1+Twk7iR2Eoju93dlWLb5w==");
+//
+//    }
+//
+//    std::string get_proxy() {
+//        return m_proxy;
+//    }
+//
+//    std::string next_token(const std::string& auth_headers) {
+//        if (!security_context) {
+//            security_context = lib::make_shared<SecurityContext>(m_proxy, auth_headers);
+//        }
+//
+//        auto result = currentToken >= 0 ? tokens[currentToken] : std::string();
+//
+//        if(currentToken < 2)
+//            currentToken++;
+//
+//        return result;
+//    }
+//
+//    void set_authenticated() {
+//    }
+//
+//    std::string get_auth_token() {
+//        auto result = currentToken >= 0 ? tokens[currentToken] : std::string();
+//
+//        return result;
+//    }
+//
+//private:
+//    std::string m_proxy;
+//
+//    std::vector<std::string> tokens;
+//    int currentToken = -1;
+//
+//    typename SecurityContext::Ptr security_context;
+//};
+//
+//} // namespace proxy
+//} // namespace http
+//} // namespace websocketpp
+//
+
 #include <string>
+#include <algorithm>
+#include <locale>
+#include <cctype>
 
-//#include <websocketpp/http/response.hpp>
 
-namespace websocketpp {
-namespace http {
-namespace proxy {
+namespace {
+    static inline std::vector<std::string> split(const std::string& input, char delim = ' ')
+    {
+        std::stringstream ss(input);
+        std::string line;
+        std::vector<std::string> lines;
 
-/// Implements Proxy Authentication 
-/**
- *
- */
-template <typename SecurityContext>
-class proxy_authenticator {
-public:
-    typedef lib::shared_ptr<proxy_authenticator> ptr;
+        while (std::getline(ss, line, delim))
+            lines.push_back(line);
 
-    proxy_authenticator(const std::string& proxy) : m_proxy(proxy) {
-
-        tokens.push_back("NTLM TlRMTVNTUAABAAAAB7IIogUABQA2AAAADgAOACgAAAAGAbEdAAAAD0NNQ0dBUlJZLUc2NVpIQ0lTQ08=");
-        tokens.push_back("NTLM TlRMTVNTUAADAAAAAAAAAFgAAAAAAAAAWAAAAAAAAABYAAAAAAAAAFgAAAAAAAAAWAAAAAAAAABYAAAABcKIogYBsR0AAAAP1+Twk7iR2Eoju93dlWLb5w==");
-
+        return lines;
     }
 
-    std::string get_proxy() {
-        return m_proxy;
+    static std::string toLower(const std::string& input)
+    {
+        auto result = input;
+
+        std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+
+        return result;
     }
 
-    std::string next_token(const std::string& auth_headers) {
-        if (!security_context) {
-            security_context = lib::make_shared<SecurityContext>(m_proxy, auth_headers);
+    static std::string normalizeScheme(const std::string& scheme)
+    {
+        static std::map<std::string, std::string> normalizedSchemeName =
+        {
+            { "negotiate",  "Negotiate" },
+            { "ntlm",       "NTLM" },
+        };
+
+        auto it = normalizedSchemeName.find(toLower(scheme));
+
+        if (it != normalizedSchemeName.end())
+            return it->second;
+
+        return "";
+    }
+
+    //
+    // This validates the initial scheme provided by the server, supporting the following formats
+    //
+    //   Proxy-Authenticate: NTLM
+    //   Proxy-Authenticate: Negotiate
+    //   Proxy-Authenticate: NTLM,Negotiate
+    //
+    static std::vector<std::string> getAuthSchemes(const std::string& proxy_auth_headers)
+    {
+        std::vector<std::string> schemes;
+
+        auto headers = split(proxy_auth_headers, ',');
+
+        for (auto header : headers)
+        {
+            std::vector<std::string> schemeParts = split(header, ',');
+
+            for (auto scheme : schemeParts)
+            {
+                auto normalizedScheme = normalizeScheme(scheme);
+
+                if (!normalizedScheme.empty())
+                    schemes.push_back(normalizedScheme);
+            }
         }
 
-        auto result = currentToken >= 0 ? tokens[currentToken] : std::string();
-
-        if(currentToken < 2)
-            currentToken++;
-
-        return result;
+        return schemes;
     }
 
-    void set_authenticated() {
+    static std::string selectAuthScheme(const std::string& proxy_auth_headers)
+    {
+        std::vector<std::string> authSchemes = getAuthSchemes(proxy_auth_headers);
+
+        std::vector<std::string> authSchemePriority{ "Negotiate", "NTLM" }; // Normalized scheme's in priority order
+
+        for (auto priority : authSchemePriority)
+        {
+            for (auto scheme : authSchemes)
+            {
+                if (priority == scheme)
+                    return scheme;
+            }
+        }
+
+        return "";
     }
 
-    std::string get_auth_token() {
-        auto result = currentToken >= 0 ? tokens[currentToken] : std::string();
+    static std::string getAuthChallenge(const std::string& authScheme, const std::string& proxy_auth_headers_collection)
+    {
+        std::vector<std::string> proxy_auth_headers = split(proxy_auth_headers_collection, ',');
 
-        return result;
+        for (auto header : proxy_auth_headers)
+        {
+            auto thisScheme = header.substr(0, authScheme.length());
+
+            if (toLower(thisScheme) == toLower(authScheme))
+            {
+                auto parts = split(header, ' ');
+
+                if (parts.size() == 2)
+                {
+                    return parts[1];
+                }
+            }
+        }
+        return "";
     }
+}
 
-private:
-    std::string m_proxy;
+namespace websocketpp {
+    namespace http {
+        namespace proxy {
 
-    std::vector<std::string> tokens;
-    int currentToken = -1;
+            /// Implements Proxy Authentication 
+            /**
+             *
+             */
+            template <typename SecurityContext>
+            class proxy_authenticator {
+            private:
+                typedef typename SecurityContext::Ptr security_context_ptr;
 
-    typename SecurityContext::Ptr security_context;
-};
+                std::string m_proxy;
+                std::string m_auth_scheme;
+                std::string m_auth_token;
 
-} // namespace proxy
-} // namespace http
-} // namespace websocketpp
+                security_context_ptr m_security_context;
+
+            public:
+                typedef lib::shared_ptr<proxy_authenticator> ptr;
+
+                proxy_authenticator(const std::string& proxy) : m_proxy(proxy) {
+                }
+
+                ~proxy_authenticator() {
+                }
+
+                std::string next_token(const std::string& auth_headers)
+                {
+                    if (!m_security_context) {
+                        auto auth_scheme = selectAuthScheme(auth_headers);
+
+                        m_security_context = lib::make_shared<SecurityContext>(m_proxy, auth_scheme);
+                    }
+
+                    if (!m_security_context) {
+                        return "";
+                    }
+
+                    auto challenge = getAuthChallenge(m_auth_scheme, auth_headers);
+
+                    if (challenge.empty()) {
+                        return "";
+                    }
+
+                    //m_auth_token = m_security_context->next_auth_token(challenge);
+
+                    if (m_auth_token.empty()) {
+                        return "";
+                    }
+
+                    m_auth_token = m_auth_scheme + " " + m_auth_token;
+
+                    return m_auth_token;
+                }
+
+                std::string get_auth_token() {
+                    return m_auth_token;
+                }
+
+                void set_authenticated() {
+                }
+
+                std::string get_proxy() {
+                    return m_proxy;
+                }
+            };
+
+        }   // namespace proxy
+    }       // namespace http
+}           // namespace websocketpp
 
 //#include <websocketpp/http/impl/proxy_authenticator.hpp>
 
