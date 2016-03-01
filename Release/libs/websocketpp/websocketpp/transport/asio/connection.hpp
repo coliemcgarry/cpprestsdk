@@ -819,7 +819,7 @@ protected:
             if (m_proxy_data->res.get_status_code() == http::status_code::proxy_authentication_required) {
                 m_elog.write(log::elevel::info, "Proxy authorization Required");
 
-                auto auth_headers = m_proxy_data->res.get_header("Proxy-Authorization");
+                auto auth_headers = m_proxy_data->res.get_header("Proxy-Authenticate");
 
                 if (m_proxy_data->proxy_authenticator) {
 
@@ -836,12 +836,12 @@ protected:
             }
 
             if (m_proxy_data->proxy_authenticator) {
-                if (m_proxy_data->res.get_status_code() != http::status_code::ok) {
+                if (m_proxy_data->res.get_status_code() == http::status_code::ok) {
                     m_proxy_data->proxy_authenticator->set_authenticated();
                 }
 
                 if (reconnect) {
-                    callback(make_error_code(error::proxy_reconnect));
+                    callback(make_error_code(transport::error::proxy_reconnect));
 
                     return;
                 }

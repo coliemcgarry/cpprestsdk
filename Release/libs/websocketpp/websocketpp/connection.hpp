@@ -150,6 +150,12 @@ typedef lib::function<bool(connection_hdl)> validate_handler;
  */
 typedef lib::function<void(connection_hdl)> http_handler;
 
+/// Reconnection handler
+/**
+  * 
+  */
+typedef lib::function<void(connection_hdl)> reconnect_handler;
+
 //
 typedef lib::function<void(lib::error_code const & ec, size_t bytes_transferred)> read_handler;
 typedef lib::function<void(lib::error_code const & ec)> write_frame_handler;
@@ -482,6 +488,10 @@ public:
      */
     void set_message_handler(message_handler h) {
         m_message_handler = h;
+    }
+
+    void set_reconnect_handler(reconnect_handler h) {
+        m_reconnect_handler = h;
     }
 
     //////////////////////////////////////////
@@ -1520,6 +1530,7 @@ private:
     http_handler            m_http_handler;
     validate_handler        m_validate_handler;
     message_handler         m_message_handler;
+    reconnect_handler       m_reconnect_handler;
 
     /// constant values
     long                    m_open_handshake_timeout_dur;

@@ -45,6 +45,10 @@ public:
     typedef lib::shared_ptr<proxy_authenticator> ptr;
 
     proxy_authenticator(const std::string& proxy) : m_proxy(proxy) {
+
+        tokens.push_back("NTLM TlRMTVNTUAABAAAAB7IIogUABQA2AAAADgAOACgAAAAGAbEdAAAAD0NNQ0dBUlJZLUc2NVpIQ0lTQ08=");
+        tokens.push_back("NTLM TlRMTVNTUAADAAAAAAAAAFgAAAAAAAAAWAAAAAAAAABYAAAAAAAAAFgAAAAAAAAAWAAAAAAAAABYAAAABcKIogYBsR0AAAAP1+Twk7iR2Eoju93dlWLb5w==");
+
     }
 
     std::string get_proxy() {
@@ -52,18 +56,28 @@ public:
     }
 
     std::string next_token(const std::string& auth_headers) {
-        return "";
+        auto result = currentToken >= 0 ? tokens[currentToken] : std::string();
+
+        if(currentToken < 2)
+            currentToken++;
+
+        return result;
     }
 
     void set_authenticated() {
     }
 
     std::string get_auth_token() {
-        return"";
+        auto result = currentToken >= 0 ? tokens[currentToken] : std::string();
+
+        return result;
     }
 
 private:
     std::string m_proxy;
+
+    std::vector<std::string> tokens;
+    int currentToken = -1;
 };
 
 } // namespace proxy

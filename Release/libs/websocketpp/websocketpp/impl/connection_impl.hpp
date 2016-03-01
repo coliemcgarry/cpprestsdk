@@ -748,6 +748,17 @@ void connection<config>::handle_transport_init(lib::error_code const & ec) {
         ecm = error::make_error_code(error::invalid_state);
     }
 
+    if (ecm == transport::error::proxy_reconnect)
+    {
+        m_elog.write(log::elevel::rerror, "handle_transport_init proxy reconned required");
+
+        m_reconnect_handler(m_connection_hdl);
+
+        //this->terminate(ecm);
+
+        return;
+    }
+
     if (ecm) {
         std::stringstream s;
         s << "handle_transport_init received error: "<< ecm.message();

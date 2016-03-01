@@ -692,6 +692,7 @@ private:
     http_handler                m_http_handler;
     validate_handler            m_validate_handler;
     message_handler             m_message_handler;
+    reconnect_handler           m_reconnect_handler;
 
     long                        m_open_handshake_timeout_dur;
     long                        m_close_handshake_timeout_dur;

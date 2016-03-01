@@ -288,6 +288,13 @@ public:
             shutdown_wspp_impl<WebsocketConfigType>(con_hdl, false);
         });
 
+        // Setup proxy options.
+        const auto &proxy = m_config.proxy();
+        if (proxy.is_specified())
+        {
+            client.set_proxy(utility::conversions::to_utf8string(proxy.address().to_string()));
+        }
+
         // Get the connection handle to save for later, have to create temporary
         // because type erasure occurs with connection_hdl.
         websocketpp::lib::error_code ec;
@@ -322,12 +329,27 @@ public:
             }
         }
 
-        // Setup proxy options.
-        const auto &proxy = m_config.proxy();
-        if (proxy.is_specified())
-        {
-            client.set_proxy(utility::conversions::to_utf8string(proxy.address().to_string()));
+        con->set_reconnect_handler([this](websocketpp::connection_hdl con_hdl) {
+            auto &client = m_client->client<WebsocketConfigType>();
 
+            websocketpp::lib::error_code ec;
+            auto con = client.get_connection(utility::conversions::to_utf8string(m_uri.to_string()), ec);
+            m_con = con;
+
+            client.connect(con);
+            //if (ec.value() != 0)
+            //{
+            //    return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "get_connection")));
+            //}
+
+        });
+
+        // Setup proxy options.
+        //const auto &proxy = m_config.proxy();
+        //if (proxy.is_specified())
+        //{
+        //    client.set_proxy(utility::conversions::to_utf8string(proxy.address().to_string()));
+        //
             //con->set_proxy(utility::conversions::to_utf8string(proxy.address().to_string()), ec);
             //if (ec)
             //{
@@ -349,7 +371,7 @@ public:
             //        return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "set_proxy_basic_auth")));
             //    }
             //}
-        }
+        //}
 
         m_state = CONNECTING;
         client.connect(con);
