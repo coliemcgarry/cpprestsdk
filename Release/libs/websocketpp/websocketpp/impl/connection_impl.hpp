@@ -1471,14 +1471,14 @@ void connection<config>::send_http_request() {
         }
     }
 
-    if (m_proxy_authenticator) {
-        auto token = m_proxy_authenticator->get_authenticated_token();
+    //if (m_proxy_authenticator) {
+        //auto token = m_proxy_authenticator->get_authenticated_token();
 
-        if(!token.empty()) {
-            m_request.replace_header("Proxy-Authorization", token);
+        //if(!token.empty()) {
+        //    m_request.replace_header("Proxy-Authorization", token);
             //m_request.req.replace_header("Connection", "Keep-alive");
-        }
-    }
+    //    }
+    //}
 
     m_handshake_buffer = m_request.raw();
 

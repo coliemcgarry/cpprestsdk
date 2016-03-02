@@ -347,6 +347,15 @@ public:
                 client.connect(con);
             });
 
+            const auto & headers = m_config.headers();
+            for (const auto & header : headers)
+            {
+                if (!utility::details::str_icmp(header.first, g_subProtocolHeader))
+                {
+                    con->append_header(utility::conversions::to_utf8string(header.first), utility::conversions::to_utf8string(header.second));
+                }
+            }
+
             client.connect(con);
         });
 
