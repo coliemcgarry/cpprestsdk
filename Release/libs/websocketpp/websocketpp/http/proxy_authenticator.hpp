@@ -236,9 +236,13 @@ namespace websocketpp {
                 std::string next_token(const std::string& auth_headers)
                 {
                     if (!m_security_context) {
-                        auto auth_scheme = selectAuthScheme(auth_headers);
+                        m_auth_scheme = selectAuthScheme(auth_headers);
 
-                        m_security_context = lib::make_shared<SecurityContext>(m_proxy, auth_scheme);
+                        if (m_auth_scheme.empty()) {
+                            return "";
+                        }
+
+                        m_security_context = lib::make_shared<SecurityContext>(m_proxy, m_auth_scheme);
                     }
 
                     if (!m_security_context) {
@@ -247,23 +251,17 @@ namespace websocketpp {
 
                     auto challenge = getAuthChallenge(m_auth_scheme, auth_headers);
 
-                    if (challenge.empty()) {
-                        return "";
-                    }
+                    m_security_context->nextAuthToken(challenge);
 
-                    //m_auth_token = m_security_context->next_auth_token(challenge);
-
-                    if (m_auth_token.empty()) {
-                        return "";
-                    }
-
-                    m_auth_token = m_auth_scheme + " " + m_auth_token;
-
-                    return m_auth_token;
+                    return m_auth_scheme + " " + m_security_context->getUpdatedToken();
                 }
 
                 std::string get_auth_token() {
-                    return m_auth_token;
+                    if (!m_security_context) {
+                        return "";
+                    }
+
+                    return m_auth_scheme + " " + m_security_context->getUpdatedToken();
                 }
 
                 void set_authenticated() {

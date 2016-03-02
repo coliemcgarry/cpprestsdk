@@ -54,9 +54,9 @@ namespace websocketpp {
                     TimeStamp           Lifetime;
                     SECURITY_STATUS     ss;
 
-                    ss = ::AcquireCredentialsHandleW(
+                    ss = ::AcquireCredentialsHandleA(
                         NULL,
-                        (SEC_WCHAR *)authScheme.c_str(),
+                        (SEC_CHAR *)authScheme.c_str(),
                         SECPKG_CRED_OUTBOUND,
                         NULL,
                         NULL,
@@ -102,10 +102,10 @@ namespace websocketpp {
 
                     if (challenge.empty())
                     {
-                        ss = ::InitializeSecurityContextW(
+                        ss = ::InitializeSecurityContextA(
                             &hCred,
                             NULL,
-                            (SEC_WCHAR *)target.c_str(), //.c_str(), // pszTarget,
+                            (SEC_CHAR *)target.c_str(), //.c_str(), // pszTarget,
                             ISC_REQ_ALLOCATE_MEMORY, //ISC_REQ_CONFIDENTIALITY ,
                             0,
                             SECURITY_NETWORK_DREP, //SECURITY_NATIVE_DREP,
@@ -131,10 +131,10 @@ namespace websocketpp {
                         InSecBuff.BufferType = SECBUFFER_TOKEN;
                         InSecBuff.pvBuffer = (BYTE *)&decodedChallenge[0];
 
-                        ss = ::InitializeSecurityContextW(
+                        ss = ::InitializeSecurityContextA(
                             &hCred,
                             &hContext,
-                            (SEC_WCHAR *)target.c_str(),
+                            (SEC_CHAR *)target.c_str(),
                             ISC_REQ_ALLOCATE_MEMORY, //ISC_REQ_CONFIDENTIALITY ,
                             0,
                             SECURITY_NETWORK_DREP, // SECURITY_NATIVE_DREP,

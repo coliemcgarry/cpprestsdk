@@ -462,6 +462,7 @@ protected:
             auto auth_token = m_proxy_data->proxy_authenticator->get_auth_token();
 
             if (!auth_token.empty()) {
+                m_proxy_data->req.remove_header("Proxy-Authorization");
                 m_proxy_data->req.append_header("Proxy-Authorization", auth_token);
             }
         }
@@ -826,7 +827,8 @@ protected:
                     auto next_token = m_proxy_data->proxy_authenticator->next_token(auth_headers);
 
                     if (!next_token.empty() && !reconnect) {
-                        m_proxy_data->req.append_header("Proxy-Authenticate", next_token);
+                        m_proxy_data->req.remove_header("Proxy-Authorization");
+                        m_proxy_data->req.append_header("Proxy-Authorization", next_token);
 
                         proxy_write(callback);
 
