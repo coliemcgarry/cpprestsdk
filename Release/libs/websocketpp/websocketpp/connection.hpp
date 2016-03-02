@@ -280,8 +280,8 @@ public:
     typedef typename config::con_msg_manager_type con_msg_manager_type;
     typedef typename con_msg_manager_type::ptr con_msg_manager_ptr;
 
-    //typedef typename config::proxy_authenticator_type proxy_authenticator_type;
-    //typedef typename proxy_authenticator_type::ptr proxy_authenticator_ptr;
+    typedef typename config::proxy_authenticator_type proxy_authenticator_type;
+    typedef typename proxy_authenticator_type::ptr proxy_authenticator_ptr;
 
     /// Type of RNG
     typedef typename config::rng_type rng_type;
@@ -492,6 +492,12 @@ public:
 
     void set_reconnect_handler(reconnect_handler h) {
         m_reconnect_handler = h;
+    }
+
+    void set_proxy_authenticator(proxy_authenticator_ptr a) {
+        m_proxy_authenticator = a;
+
+        config::transport_type::transport_con_type::set_proxy_authenticator(a);
     }
 
     //////////////////////////////////////////
@@ -1618,6 +1624,7 @@ private:
     response_type           m_response;
     uri_ptr                 m_uri;
     std::string             m_subprotocol;
+    proxy_authenticator_ptr m_proxy_authenticator;
 
     // connection data that might not be necessary to keep around for the life
     // of the whole connection.

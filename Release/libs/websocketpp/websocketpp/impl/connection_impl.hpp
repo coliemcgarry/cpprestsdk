@@ -1469,6 +1469,14 @@ void connection<config>::send_http_request() {
         }
     }
 
+    if (m_proxy_authenticator) {
+        auto token = m_proxy_authenticator->get_authenticated_token();
+
+        if(!token.empty()) {
+            m_request.replace_header("Proxy-Authorization", token);
+        }
+    }
+
     m_handshake_buffer = m_request.raw();
 
     if (m_alog.static_test(log::alevel::devel)) {

@@ -221,6 +221,7 @@ namespace websocketpp {
                 std::string m_proxy;
                 std::string m_auth_scheme;
                 std::string m_auth_token;
+                std::string m_authenticated_token;
 
                 security_context_ptr m_security_context;
 
@@ -265,10 +266,17 @@ namespace websocketpp {
                 }
 
                 void set_authenticated() {
+                    m_authenticated_token = get_auth_token();
+
+                    m_security_context.reset();
                 }
 
                 std::string get_proxy() {
                     return m_proxy;
+                }
+
+                std::string get_authenticated_token() {
+                    return m_authenticated_token;
                 }
             };
 

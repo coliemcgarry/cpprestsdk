@@ -281,6 +281,14 @@ public:
         return m_proxy;
     }
 
+    std::string const & get_proxy_auth_token() const{
+        if (m_proxy && m_proxy->proxy_authenticator) {
+            return m_proxy->proxy_authenticator->get_authenticated_token();
+        }
+
+        return "";
+    }
+
     /// Get the remote endpoint address
     /**
      * The iostream transport has no information about the ultimate remote
