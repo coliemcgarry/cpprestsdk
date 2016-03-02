@@ -849,6 +849,7 @@ protected:
                 return;
             }
 
+            //ec = tcon->proxy_init(u->get_host(), u->get_port());
             ec = tcon->proxy_init(u->get_authority());
             if (ec) {
                 cb(ec);

@@ -454,16 +454,21 @@ protected:
         m_proxy_data->req.set_version("HTTP/1.1");
         m_proxy_data->req.set_method("CONNECT");
 
+        //std::stringstream port_str;
+
+        //port_str << port;
+
         m_proxy_data->req.set_uri(authority);
-        m_proxy_data->req.replace_header("Host",authority);
+        m_proxy_data->req.replace_header("Host", authority);
+        //m_proxy_data->req.replace_header("Port", port_str.str());
 
         if (m_proxy_data->proxy_authenticator) {
 
             auto auth_token = m_proxy_data->proxy_authenticator->get_auth_token();
 
             if (!auth_token.empty()) {
-                m_proxy_data->req.remove_header("Proxy-Authorization");
-                m_proxy_data->req.append_header("Proxy-Authorization", auth_token);
+                //m_proxy_data->req.remove_header("Proxy-Authorization");
+                m_proxy_data->req.replace_header("Proxy-Authorization", auth_token);
             }
         }
 
@@ -827,8 +832,9 @@ protected:
                     auto next_token = m_proxy_data->proxy_authenticator->next_token(auth_headers);
 
                     if (!next_token.empty() && !reconnect) {
-                        m_proxy_data->req.remove_header("Proxy-Authorization");
-                        m_proxy_data->req.append_header("Proxy-Authorization", next_token);
+                        m_proxy_data->res = response_type();
+                        //m_proxy_data->req.remove_header("Proxy-Authorization");
+                        m_proxy_data->req.replace_header("Proxy-Authorization", next_token);
 
                         proxy_write(callback);
 
