@@ -336,12 +336,18 @@ public:
             auto con = client.get_connection(utility::conversions::to_utf8string(m_uri.to_string()), ec);
             m_con = con;
 
-            client.connect(con);
-            //if (ec.value() != 0)
-            //{
-            //    return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "get_connection")));
-            //}
+            // Hack to  test out a theory
+            con->set_reconnect_handler([this](websocketpp::connection_hdl con_hdl) {
+                auto &client = m_client->client<WebsocketConfigType>();
 
+                websocketpp::lib::error_code ec;
+                auto con = client.get_connection(utility::conversions::to_utf8string(m_uri.to_string()), ec);
+                m_con = con;
+
+                client.connect(con);
+            });
+
+            client.connect(con);
         });
 
         // Setup proxy options.

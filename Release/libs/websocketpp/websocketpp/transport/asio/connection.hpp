@@ -468,11 +468,16 @@ protected:
 
         m_proxy_data->req.set_uri(authority);
         m_proxy_data->req.replace_header("Host", authority);
+        //m_proxy)data->req.replace_header("Connection", "Keep-alive");
         //m_proxy_data->req.replace_header("Port", port_str.str());
 
         if (m_proxy_data->proxy_authenticator) {
 
             auto auth_token = m_proxy_data->proxy_authenticator->get_auth_token();
+
+            if (m_proxy_data->proxy_authenticator->is_authenticated()) {
+                auth_token = m_proxy_data->proxy_authenticator->get_authenticated_token();
+            }
 
             if (!auth_token.empty()) {
                 //m_proxy_data->req.remove_header("Proxy-Authorization");
@@ -853,6 +858,9 @@ protected:
 
             if (m_proxy_data->proxy_authenticator) {
                 if (m_proxy_data->res.get_status_code() == http::status_code::ok) {
+                    //if (!m_proxy_data->proxy_authenticator->is_authenticated()) {
+                    //    reconnect = true;
+                    //}
                     m_proxy_data->proxy_authenticator->set_authenticated();
                 }
 

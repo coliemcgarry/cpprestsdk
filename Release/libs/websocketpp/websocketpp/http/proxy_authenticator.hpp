@@ -271,6 +271,10 @@ namespace websocketpp {
                     m_security_context.reset();
                 }
 
+                bool is_authenticated() {
+                    return m_authenticated_token.empty() ? false : true;
+                }
+
                 std::string get_proxy() {
                     return m_proxy;
                 }

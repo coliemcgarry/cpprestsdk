@@ -752,9 +752,11 @@ void connection<config>::handle_transport_init(lib::error_code const & ec) {
     {
         m_elog.write(log::elevel::rerror, "handle_transport_init proxy reconned required");
 
-        m_reconnect_handler(m_connection_hdl);
+        if(m_reconnect_handler) {
+            m_reconnect_handler(m_connection_hdl);
 
-        //this->terminate(ecm);
+            return;
+        }
 
         return;
     }
@@ -1474,6 +1476,7 @@ void connection<config>::send_http_request() {
 
         if(!token.empty()) {
             m_request.replace_header("Proxy-Authorization", token);
+            //m_request.req.replace_header("Connection", "Keep-alive");
         }
     }
 
