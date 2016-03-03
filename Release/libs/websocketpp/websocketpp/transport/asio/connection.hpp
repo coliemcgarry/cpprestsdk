@@ -846,7 +846,6 @@ protected:
 
                     if (!next_token.empty() && !reconnect) {
                         m_proxy_data->res = response_type();
-                        //m_proxy_data->req.remove_header("Proxy-Authorization");
                         m_proxy_data->req.replace_header("Proxy-Authorization", next_token);
 
                         proxy_write(callback);
