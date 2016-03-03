@@ -145,43 +145,29 @@ namespace websocketpp {
         namespace proxy {
 
                 template <typename security_context>
-                std::string proxy_authenticator<security_context>::next_token(const std::string& auth_headers)
+                bool proxy_authenticator<security_context>::next_token(const std::string& auth_headers)
                 {
                     if (!m_security_context) {
                         m_auth_scheme = selectAuthScheme(auth_headers);
 
                         if (m_auth_scheme.empty()) {
-                            return "";
+                            return false;
                         }
 
                         m_security_context = lib::make_shared<security_context>(m_proxy, m_auth_scheme);
                     }
 
                     if (!m_security_context) {
-                        return "";
+                        return false;
                     }
 
                     auto challenge = getAuthChallenge(m_auth_scheme, auth_headers);
 
                     m_security_context->nextAuthToken(challenge);
 
-                    return m_auth_scheme + " " + m_security_context->getUpdatedToken();
-                }
+                    m_auth_token = m_security_context->getUpdatedToken();
 
-                template <typename security_context>
-                std::string proxy_authenticator<security_context>::get_auth_token() {
-                    if (!m_security_context) {
-                        return "";
-                    }
-
-                    return m_auth_scheme + " " + m_security_context->getUpdatedToken();
-                }
-
-                template <typename security_context>
-                void proxy_authenticator<security_context>::set_authenticated() {
-                    m_authenticated_token = get_auth_token();
-
-                    m_security_context.reset();
+                    return m_auth_token.empty() ? false : true;
                 }
         }   // namespace proxy
     }       // namespace http

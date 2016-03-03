@@ -49,9 +49,17 @@ namespace websocketpp {
                 std::string m_proxy;
                 std::string m_auth_scheme;
                 std::string m_auth_token;
-                std::string m_authenticated_token;
+                bool authenticated=false;
 
                 security_context_ptr m_security_context;
+
+                std::string build_auth_response() {
+                    if (!m_auth_scheme.empty() && !m_auth_token.empty()) {
+                        return m_auth_scheme + " " + m_auth_token;
+                    }
+
+                    return "";
+                }
 
             public:
                 typedef lib::shared_ptr<proxy_authenticator> ptr;
@@ -59,22 +67,24 @@ namespace websocketpp {
                 proxy_authenticator(const std::string& proxy) : m_proxy(proxy) {
                 }
 
-                std::string next_token(const std::string& auth_headers);
-                std::string get_auth_token();
+                bool  next_token(const std::string& auth_headers);
 
-                void set_authenticated();
+                std::string get_auth_token() {
+                    return build_auth_response();
+                }
 
-                bool is_authenticated() {
-                    return m_authenticated_token.empty() ? false : true;
+                void set_authenticated() {
+                    authenticated = true;
+                }
+
+                std::string get_authenticated_token() {
+                    return authenticated ? build_auth_response() : "";
                 }
 
                 std::string get_proxy() {
                     return m_proxy;
                 }
 
-                std::string get_authenticated_token() {
-                    return m_authenticated_token;
-                }
             };
 
         }   // namespace proxy
