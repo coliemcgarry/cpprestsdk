@@ -820,8 +820,7 @@ protected:
 
             auto connection_header = m_proxy_data->res.get_header("Connection");
 
-            if (connection_header == "Close")
-            {
+            if (connection_header == "Close") {
                 reconnect = true;
             }
 
@@ -847,9 +846,6 @@ protected:
 
             if (m_proxy_data->proxy_authenticator) {
                 if (m_proxy_data->res.get_status_code() == http::status_code::ok) {
-                    //if (!m_proxy_data->proxy_authenticator->is_authenticated()) {
-                    //    reconnect = true;
-                    //}
                     m_proxy_data->proxy_authenticator->set_authenticated();
                 }
 
