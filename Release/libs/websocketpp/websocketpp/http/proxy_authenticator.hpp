@@ -28,6 +28,10 @@
 #ifndef HTTP_PROXY_AUTHENTICATOR_HPP
 #define HTTP_PROXY_AUTHENTICATOR_HPP
 
+#include <websocketpp/common/memory.hpp>
+
+#include <websocketpp/http/response.hpp>
+
 #include <string>
 #include <algorithm>
 #include <locale>
@@ -47,15 +51,15 @@ namespace websocketpp {
                 typedef typename security_context::Ptr security_context_ptr;
 
                 std::string m_proxy;
-                std::string m_auth_scheme;
+                std::string m_auth_scheme_name;
                 std::string m_auth_token;
                 bool authenticated=false;
 
                 security_context_ptr m_security_context;
 
                 std::string build_auth_response() {
-                    if (!m_auth_scheme.empty() && !m_auth_token.empty()) {
-                        return m_auth_scheme + " " + m_auth_token;
+                    if (!m_auth_scheme_name.empty() && !m_auth_token.empty()) {
+                        return m_auth_scheme_name + " " + m_auth_token;
                     }
 
                     return "";

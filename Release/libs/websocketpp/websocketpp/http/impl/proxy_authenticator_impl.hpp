@@ -36,199 +36,7 @@
 namespace websocketpp {
     namespace http {
         namespace proxy {
-            namespace helpers {
-                inline bool icompareCh(char lhs, char rhs) {
-                    return(::toupper(lhs) == ::toupper(rhs));
-                }
-                inline bool icompare(const std::string& s1, const std::string& s2) {
-                    return((s1.size() == s2.size()) &&
-                        std::equal(s1.begin(), s1.end(), s2.begin(), icompareCh));
-                }
-
-                inline std::vector<std::string> split(const std::string& input, char delim = ' ')
-                {
-                    std::stringstream ss(input);
-                    std::string line;
-                    std::vector<std::string> lines;
-
-                    while (std::getline(ss, line, delim))
-                        lines.push_back(line);
-
-                    return lines;
-                }
-
-                static std::string toLower(const std::string& input)
-                {
-                    auto result = input;
-
-                    std::transform(result.begin(), result.end(), result.begin(), ::tolower);
-
-                    return result;
-                }
-
-                static std::string normalizeScheme(const std::string& scheme)
-                {
-                    static std::map<std::string, std::string> normalizedSchemeName =
-                    {
-                        { "negotiate",  "Negotiate" },
-                        { "ntlm",       "NTLM" },
-                    };
-
-                    auto it = normalizedSchemeName.find(toLower(scheme));
-
-                    if (it != normalizedSchemeName.end())
-                        return it->second;
-
-                    return "";
-                }
-
-                //
-                // This validates the initial scheme provided by the server, supporting the following formats
-                //
-                //   Proxy-Authenticate: NTLM
-                //   Proxy-Authenticate: Negotiate
-                //   Proxy-Authenticate: NTLM,Negotiate
-                //
-                static std::vector<std::string> getAuthSchemes(const std::string& proxy_auth_headers)
-                {
-                    std::vector<std::string> schemes;
-
-                    auto auth_headers = split(proxy_auth_headers, ',');
-
-                    for (auto auth_header : auth_headers)
-                    {
-                        std::vector<std::string> schemeParts = split(auth_header, ',');
-
-                        for (auto scheme : schemeParts)
-                        {
-                            auto normalizedScheme = normalizeScheme(scheme);
-
-                            if (!normalizedScheme.empty())
-                                schemes.push_back(normalizedScheme);
-                        }
-                    }
-
-                    return schemes;
-                }
-
-                static std::string selectAuthScheme(const std::string& proxy_auth_headers)
-                {
-                    std::vector<std::string> authSchemes = getAuthSchemes(proxy_auth_headers);
-
-                    std::vector<std::string> authSchemePriority{ "Negotiate", "NTLM" }; // Normalized scheme's in priority order
-
-                    for (auto priority : authSchemePriority)
-                    {
-                        for (auto scheme : authSchemes)
-                        {
-                            if (priority == scheme)
-                                return scheme;
-                        }
-                    }
-
-                    return "";
-                }
-
-                static std::string getAuthChallenge(const std::string& authScheme, const std::string& proxy_auth_headers_collection)
-                {
-                    std::vector<std::string> proxy_auth_headers = split(proxy_auth_headers_collection, ',');
-
-                    for (auto auth_header : proxy_auth_headers)
-                    {
-                        auto thisScheme = auth_header.substr(0, authScheme.length());
-
-                        if (toLower(thisScheme) == toLower(authScheme))
-                        {
-                            auto parts = split(auth_header, ' ');
-
-                            if (parts.size() == 2)
-                            {
-                                return parts[1];
-                            }
-                        }
-                    }
-                    return "";
-                }
-
-                inline bool is_basic(std::string const& scheme) {
-                    return icompare(scheme, "basic");
-                }
-                inline bool is_digest(std::string const& scheme) {
-                    return icompare(scheme, "digest");
-                }
-                inline bool is_ntlm(std::string const& scheme) {
-                    return icompare(scheme, "ntlm");
-                }
-                inline bool is_negotiate(std::string const& scheme) {
-                    return icompare(scheme, "negotiate");
-                }
-
-                inline bool is_auth_scheme(std::string const& scheme) {
-                    if (is_basic(scheme))     return true;
-                    if (is_digest(scheme))    return true;
-                    if (is_ntlm(scheme))      return true;
-                    if (is_negotiate(scheme)) return true;
-                    return false;
-                }
-
-                template <typename InputIterator>
-                InputIterator parse_ntlm(InputIterator begin, InputIterator end) {
-                    auto cursor = http::parser::extract_all_lws(begin, end);
-
-                    auto next = http::parser::extract_token(cursor, end);
-
-                    //if (isAuthScheme(next.first)) {
-                    //    return cursor;
-                    //}
-
-                    return cursor;
-                }
-
-                template <typename InputIterator>
-                inline InputIterator parse_basic(InputIterator begin, InputIterator end) {
-                    
-                    auto cursor = http::parser::extract_all_lws(begin, end);
-
-                    while (cursor != end) {
-                        auto next = http::parser::extract_token(cursor, end);
-
-                        if (!next.first.empty()) {
-                            if (is_auth_scheme(next.first)) {
-                                return cursor;
-                            }
-
-                            cursor = next.second;
-
-                            if (*cursor != '=') {
-                                return cursor;
-                            }
-
-                            // Advance past the '='
-                            ++cursor;
-
-                            next = http::parser::extract_quoted_string(cursor, end);
-
-                            if (next.first.empty()) {
-                                next = http::parser::extract_token(cursor, end);
-                            }
-
-                            if (next.first.empty()) {
-                                return cursor;
-                            }
-
-                            cursor = next.second;
-
-                            if (*cursor == ',') {
-                                ++cursor;
-                            }
-                        }
-                    }
-
-                    return cursor;
-                }
-
-
-
+            namespace auth_parser {
                 /**
                 * Ref: https://tools.ietf.org/html/rfc7235 "2.1 Challenge and Response"
                 *
@@ -237,50 +45,229 @@ namespace websocketpp {
                 * and in our case auth-scheme is one of "NTLM", "Negotiate", "Basic" or "Digest"
                 *
                 * auth-param     = token BWS "=" BWS ( token / quoted-string )
-                * 
+                *
                 * BWS is basically 'optional' white space
                 *
                 * token68        = 1*( ALPHA / DIGIT / "-" / "." / "_" / "~" / "+" / "/" ) *"="
                 */
+
+                inline bool icompareCh(char lhs, char rhs) {
+                    return(::toupper(lhs) == ::toupper(rhs));
+                }
+                inline bool icompare(const std::string& s1, const std::string& s2) {
+                    return((s1.size() == s2.size()) &&
+                        std::equal(s1.begin(), s1.end(), s2.begin(), icompareCh));
+                }
+
+                /// Read and return the next token in the stream
+                inline bool is_token68_char(unsigned char c) {
+                    if (::isalpha(c)) return true;
+                    if (::isdigit(c)) return true;
+
+                    switch (c) {
+                    case '-': return true;
+                    case '.': return true;
+                    case '_': return true;
+                    case '~': return true;
+                    case '+': return true;
+                    case '/': return true;
+                    case '=': return true; // padding char (not strictly part of the 68!)
+                    }
+
+                    return false;
+                }
+                /// Is the character a non-token
+                inline bool is_not_token68_char(unsigned char c) {
+                    return !is_token68_char(c);
+                }
                 template <typename InputIterator>
-                inline bool parseAuth(InputIterator begin, InputIterator end) {
-                    InputIterator cursor=begin;
+                std::pair<std::string, InputIterator> extract_token68(InputIterator begin,
+                    InputIterator end)
+                {
+                    InputIterator it = std::find_if(begin, end, &is_not_token68_char);
+                    return std::make_pair(std::string(begin, it), it);
+                }
 
-                    while (cursor != end) {
-                        auto next = http::parser::extract_token(cursor, end);
+                class AuthScheme
+                {
+                public:
+                    AuthScheme(const std::string& name="") : m_name(name), m_type(Unknown)
+                    {
+                        if (icompare(m_name, "basic"))      m_type = Basic;
+                        if (icompare(m_name, "digest"))     m_type = Digest;
+                        if (icompare(m_name, "ntlm"))       m_type = NTLM;
+                        if (icompare(m_name, "negotiate"))  m_type = Negotiate;
+                    }
 
-                        auto auth_scheme = next.first;
+                    std::string get_name()      const { return m_name;      }
+                    std::string get_challenge() const { return m_challenge; }
 
-                        if (!is_auth_scheme(auth_scheme)) {
-                            return false;
+                    bool is_known()     const { return m_type == Unknown   ? false : true; }
+                    bool is_basic()     const { return m_type == Basic     ? true : false; }
+                    bool is_digest()    const { return m_type == Digest    ? true : false; }
+                    bool is_ntlm()      const { return m_type == NTLM      ? true : false; }
+                    bool is_negotiate() const { return m_type == Negotiate ? true : false; }
+
+                    static bool comparePriority(AuthScheme const& lhs, AuthScheme const& rhs) {
+                        return lhs.m_type > rhs.m_type;
+                    }
+
+                    template <typename InputIterator>
+                    inline InputIterator parse(InputIterator begin, InputIterator end) {
+                        switch (m_type)
+                        {
+                        case Basic:     return parse_basic(begin, end);
+                        case NTLM:      return parse_ntlm_negotiate(begin, end);
+                        case Negotiate: return parse_ntlm_negotiate(begin, end);
                         }
 
-                        if (next.second == end) {break; }
+                        return begin;
+                    }
 
+                private:
+                    enum scheme_type { Unknown, Basic, Digest, NTLM, Negotiate };
+
+                    typedef std::pair<std::string, std::string> KeyValue;
+
+                    std::string m_name;
+                    scheme_type m_type;
+                    std::vector<KeyValue> m_params;
+                    std::string m_challenge;
+
+                    template <typename InputIterator>
+                    inline InputIterator parse_basic(InputIterator begin, InputIterator end) {
+                        auto cursor = http::parser::extract_all_lws(begin, end);
+
+                        while (cursor != end) {
+                            auto next = http::parser::extract_token(cursor, end);
+
+                            if (!next.first.empty()) {
+                                if (AuthScheme(next.first).is_known()) {
+                                    return cursor;
+                                }
+
+                                auto key = next.first;
+
+                                cursor = next.second;
+
+                                if (*cursor != '=') {
+                                    return cursor;
+                                }
+
+                                // Advance past the '='
+                                ++cursor;
+
+                                if (cursor == end) {
+                                    return cursor;
+                                }
+
+                                next = http::parser::extract_quoted_string(cursor, end);
+
+                                if (next.first.empty()) {
+                                    next = http::parser::extract_token(cursor, end);
+                                }
+
+                                if (next.first.empty()) {
+                                    return cursor;
+                                }
+
+                                m_params.push_back(KeyValue(key, next.first));
+
+                                cursor = next.second;
+
+                                if (cursor != end && *cursor == ',') {
+                                    ++cursor;
+                                }
+                            }
+                        }
+
+                        return cursor;
+                    }
+
+                    template <typename InputIterator>
+                    InputIterator parse_ntlm_negotiate(InputIterator begin, InputIterator end) {
+                        auto cursor = http::parser::extract_all_lws(begin, end);
+
+                        auto next = extract_token68(cursor, end);
+
+                        if (!next.first.empty()) {
+                            m_challenge = next.first;
+
+                            cursor = next.second;
+                        }
+
+                        return cursor;
+                    }
+
+                };
+
+                typedef std::vector<AuthScheme> AuthSchemes;
+
+                template <typename InputIterator>
+                inline std::pair<AuthScheme, InputIterator> parse_auth_scheme(InputIterator begin, InputIterator end) {
+                    auto cursor = begin;
+
+                    auto next = http::parser::extract_token(cursor, end);
+
+                    AuthScheme scheme(next.first);
+
+                    if (scheme.is_known() && next.second != end) {
                         cursor = next.second;
                         cursor = http::parser::extract_all_lws(cursor, end);
 
-                        if (auth_scheme == "NTLM") {
-                            cursor = parse_ntlm(cursor, end);
-                        }
-
-                        if (auth_scheme == "Basic") {
-                            cursor = parse_basic(cursor, end);
-                        }
-
-                        if (cursor == end) {
-                            break;
-                        }
-
-                        if (*cursor != ',') {
-                            return false;
-                        }
-
-                        cursor = http::parser::extract_all_lws(cursor+1, end);;
+                        cursor = scheme.parse(cursor, end);
                     }
 
-                    return true;
+                    return std::make_pair(scheme, cursor);
+                }
 
+                template <typename InputIterator>
+                inline AuthSchemes parse_auth_schemes(InputIterator begin, InputIterator end) {
+                    AuthSchemes auth_schemes;
+
+                    InputIterator cursor = begin;
+
+                    while (cursor != end) {
+                        auto next = parse_auth_scheme(cursor, end);
+
+                        if (!next.first.is_known()) {
+                            return AuthSchemes();
+                        }
+
+                        auth_schemes.push_back(next.first);
+
+                        cursor = next.second;
+
+                        if (cursor != end) {
+                            if (*cursor != ',') {
+                                return AuthSchemes();
+                            }
+                            ++cursor;
+
+                            cursor = http::parser::extract_all_lws(cursor + 1, end);
+                        }
+                    }
+
+                    return auth_schemes;
+                }
+
+                AuthScheme select_auth_scheme(std::string const & auth_headers)
+                {
+                    auto auth_schemes = parse_auth_schemes(auth_headers.begin(), auth_headers.end());
+
+                    if (auth_schemes.empty()) {
+                        return AuthScheme();
+                    }
+
+                    std::stable_sort(auth_schemes.begin(), auth_schemes.end(), AuthScheme::comparePriority);
+
+                    return auth_schemes.front();
+                }
+
+                AuthScheme parse_auth_scheme(std::string const & auth_header) {
+                    auto result = parse_auth_scheme(auth_header.begin(), auth_header.end());
+
+                    return result.first;
                 }
             }
 
@@ -290,27 +277,30 @@ namespace websocketpp {
             template <typename security_context>
             bool proxy_authenticator<security_context>::next_token(const std::string& auth_headers)
             {
-                helpers::parseAuth(auth_headers.begin(), auth_headers.end());
+                auth_parser::AuthScheme auth_scheme;
 
                 if (!m_security_context) {
-                    m_auth_scheme = helpers::selectAuthScheme(auth_headers);
+                    auth_scheme = auth_parser::select_auth_scheme(auth_headers);
 
-                    if (m_auth_scheme.empty()) {
+                    if (!auth_scheme.is_known()) {
                         return false;
                     }
 
-                    m_security_context = lib::make_shared<security_context>(m_proxy, m_auth_scheme);
+                    m_auth_scheme_name = auth_scheme.get_name();
+
+                    m_security_context = lib::make_shared<security_context>(m_proxy, m_auth_scheme_name);
+                }
+                else {
+                    auth_scheme = auth_parser::parse_auth_scheme(auth_headers);
                 }
 
-                if (!m_security_context) {
+                if (!m_security_context || !auth_scheme.is_known()) {
                     return false;
                 }
 
-                auto challenge = helpers::getAuthChallenge(m_auth_scheme, auth_headers);
+                m_security_context->nextAuthToken(auth_scheme.get_challenge());
 
-                m_security_context->nextAuthToken(challenge);
-
-                m_auth_token = m_security_context->getUpdatedToken();
+                m_auth_token       = m_security_context->getUpdatedToken();
 
                 return m_auth_token.empty() ? false : true;
             }
