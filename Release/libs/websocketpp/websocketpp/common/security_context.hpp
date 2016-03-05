@@ -48,6 +48,10 @@ namespace websocketpp {
             public:
                 using Ptr = std::shared_ptr<SecurityContext>;
 
+                static SecurityContext::Ptr build(const std::string& proxyName, const std::string& authScheme) {
+                    return  lib::make_shared<SecurityContext>(proxyName, authScheme);
+                }
+
                 SecurityContext(const std::string& proxyName, const std::string& authScheme) :
                     proxyName(proxyName), authScheme(authScheme)
                 {
@@ -161,12 +165,7 @@ namespace websocketpp {
                         return false;
                     }
 
-                    //auto itFirst = (unsigned char *)OutSecBuff.pvBuffer;
-                    //auto itLast = (unsigned char *)OutSecBuff.pvBuffer + OutSecBuff.cbBuffer;
-                    //
-                    //const std::vector<unsigned char> data(itFirst, itLast);
-
-                    updatedToken = base64_encode((const unsigned char*) OutSecBuff.pvBuffer, (size_t) OutSecBuff.cbBuffer); //  utility::conversions::to_base64(data);
+                    updatedToken = base64_encode((const unsigned char*) OutSecBuff.pvBuffer, (size_t) OutSecBuff.cbBuffer);
 
                     ::FreeContextBuffer(OutSecBuff.pvBuffer);
 
@@ -181,13 +180,13 @@ namespace websocketpp {
                 }
 
             private:
-                SecHandle               hContext;
-                CredHandle              hCred;
+                SecHandle         hContext;
+                CredHandle        hCred;
                 std::string       proxyName;
                 std::string       authScheme;
                 std::string       updatedToken;
 
-                bool                    freeCredentials = false;
+                bool              freeCredentials = false;
             };
         }
     }

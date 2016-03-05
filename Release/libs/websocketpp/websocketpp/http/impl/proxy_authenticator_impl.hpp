@@ -291,7 +291,7 @@ namespace websocketpp {
 
                     m_auth_scheme_name = auth_scheme.get_name();
 
-                    m_security_context = lib::make_shared<security_context>(m_proxy, m_auth_scheme_name);
+                    m_security_context = security_context::build(m_proxy, m_auth_scheme_name);
                 }
                 else {
                     auth_scheme = auth_parser::parse_auth_scheme(auth_headers);

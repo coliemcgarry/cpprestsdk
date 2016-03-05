@@ -71,7 +71,7 @@ namespace websocketpp {
                 proxy_authenticator(const std::string& proxy) : m_proxy(proxy) {
                 }
 
-                bool  next_token(const std::string& auth_headers);
+                bool next_token(const std::string& auth_headers);
 
                 std::string get_auth_token() {
                     return build_auth_response();
