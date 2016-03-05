@@ -101,6 +101,7 @@ namespace websocketpp {
 
                     std::string get_name()      const { return m_name;      }
                     std::string get_challenge() const { return m_challenge; }
+                    std::string get_realm()     const { return m_realm;     }
 
                     bool is_known()     const { return m_type == Unknown   ? false : true; }
                     bool is_basic()     const { return m_type == Basic     ? true : false; }
@@ -114,11 +115,13 @@ namespace websocketpp {
 
                     template <typename InputIterator>
                     inline InputIterator parse(InputIterator begin, InputIterator end) {
+                        auto cursor = http::parser::extract_all_lws(begin, end);
+
                         switch (m_type)
                         {
-                        case Basic:     return parse_basic(begin, end);
-                        case NTLM:      return parse_ntlm_negotiate(begin, end);
-                        case Negotiate: return parse_ntlm_negotiate(begin, end);
+                        case Basic:     return parse_basic(cursor, end);
+                        case NTLM:      return parse_ntlm_negotiate(cursor, end);
+                        case Negotiate: return parse_ntlm_negotiate(cursor, end);
                         }
 
                         return begin;
@@ -127,57 +130,61 @@ namespace websocketpp {
                 private:
                     enum scheme_type { Unknown, Basic, Digest, NTLM, Negotiate };
 
-                    typedef std::pair<std::string, std::string> KeyValue;
-
                     std::string m_name;
                     scheme_type m_type;
-                    std::vector<KeyValue> m_params;
                     std::string m_challenge;
+                    std::string m_realm;
 
                     template <typename InputIterator>
                     inline InputIterator parse_basic(InputIterator begin, InputIterator end) {
-                        auto cursor = http::parser::extract_all_lws(begin, end);
+                        auto cursor = begin;
 
                         while (cursor != end) {
+                            cursor = http::parser::extract_all_lws(cursor, end);
+
                             auto next = http::parser::extract_token(cursor, end);
 
-                            if (!next.first.empty()) {
-                                if (AuthScheme(next.first).is_known()) {
-                                    return cursor;
-                                }
+                            if (next.first.empty()) {
+                                return cursor;
+                            }
 
-                                auto key = next.first;
+                            if (AuthScheme(next.first).is_known()) {
+                                return cursor;
+                            }
 
-                                cursor = next.second;
+                            auto key = next.first;
 
-                                if (*cursor != '=') {
-                                    return cursor;
-                                }
+                            cursor = next.second;
 
-                                // Advance past the '='
+                            if (*cursor != '=') {
+                                return cursor;
+                            }
+
+                            // Advance past the '='
+                            ++cursor;
+
+                            if (cursor == end) {
+                                return cursor;
+                            }
+
+                            next = http::parser::extract_quoted_string(cursor, end);
+
+                            if (next.first.empty()) {
+                                next = http::parser::extract_token(cursor, end);
+                            }
+
+                            if (next.first.empty()) {
+                                return cursor;
+                            }
+
+                            if (icompare(key, "Realm")) {
+                                m_realm = next.first;
+                            }
+
+                            cursor = next.second;
+
+                            if (cursor != end && *cursor == ',') {
                                 ++cursor;
-
-                                if (cursor == end) {
-                                    return cursor;
-                                }
-
-                                next = http::parser::extract_quoted_string(cursor, end);
-
-                                if (next.first.empty()) {
-                                    next = http::parser::extract_token(cursor, end);
-                                }
-
-                                if (next.first.empty()) {
-                                    return cursor;
-                                }
-
-                                m_params.push_back(KeyValue(key, next.first));
-
-                                cursor = next.second;
-
-                                if (cursor != end && *cursor == ',') {
-                                    ++cursor;
-                                }
                             }
                         }
 
@@ -205,17 +212,18 @@ namespace websocketpp {
 
                 template <typename InputIterator>
                 inline std::pair<AuthScheme, InputIterator> parse_auth_scheme(InputIterator begin, InputIterator end) {
-                    auto cursor = begin;
+                    auto cursor = http::parser::extract_all_lws(begin, end);
 
                     auto next = http::parser::extract_token(cursor, end);
 
                     AuthScheme scheme(next.first);
 
-                    if (scheme.is_known() && next.second != end) {
+                    if (scheme.is_known()) {
                         cursor = next.second;
-                        cursor = http::parser::extract_all_lws(cursor, end);
 
-                        cursor = scheme.parse(cursor, end);
+                        if (next.second != end) {
+                            cursor = scheme.parse(cursor, end);
+                        }
                     }
 
                     return std::make_pair(scheme, cursor);
@@ -238,13 +246,8 @@ namespace websocketpp {
 
                         cursor = next.second;
 
-                        if (cursor != end) {
-                            if (*cursor != ',') {
-                                return AuthSchemes();
-                            }
+                        if (cursor != end && *cursor == ',') {
                             ++cursor;
-
-                            cursor = http::parser::extract_all_lws(cursor + 1, end);
                         }
                     }
 
