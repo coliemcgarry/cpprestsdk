@@ -186,6 +186,9 @@ public:
      * The proxy must be set up as an explicit (CONNECT) proxy allowed to
      * connect to the port you specify. Traffic to the proxy is not encrypted.
      *
+     * Note: Method to be Deprecated. Call the 'set_proxy' method on the endpoint
+     *       object instead. 
+     *
      * @param uri The full URI of the proxy to connect to.
      *
      * @param ec A status value
@@ -220,6 +223,9 @@ public:
      * http://proxy.example.com:8080/
      *
      * The proxy must be set up as an explicit proxy
+     *
+     * Note: Method to be Deprecated. Call the 'set_proxy_basic_auth' method on the endpoint
+     *       object instead.
      *
      * @param username The username to send
      *
@@ -280,14 +286,6 @@ public:
 
     std::string const & get_proxy() const {
         return m_proxy;
-    }
-
-    std::string const & get_proxy_auth_token() const{
-        if (m_proxy && m_proxy->proxy_authenticator) {
-            return m_proxy->proxy_authenticator->get_authenticated_token();
-        }
-
-        return "";
     }
 
     /// Get the remote endpoint address

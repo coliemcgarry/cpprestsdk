@@ -1,5 +1,5 @@
 import os, sys, commands
-env = Environment(ENV = os.environ, TARGET_ARCH='x86')
+env = Environment(ENV = os.environ)
 
 # figure out a better way to configure this
 if os.environ.has_key('CXX'):
@@ -60,7 +60,7 @@ def boostlibs(libnames,localenv):
          libs.append(lib)
       return libs
 
-if env['PLATFORM'].startswith('win'):
+if not env['PLATFORM'].startswith('win'):
    env.Append(CPPDEFINES = ['WIN32',
                             'NDEBUG',
                             'WIN32_LEAN_AND_MEAN',

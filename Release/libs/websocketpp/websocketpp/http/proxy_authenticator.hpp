@@ -43,10 +43,21 @@ namespace websocketpp {
     namespace http {
         namespace proxy {
 
-            /// Implements Proxy Authentication 
+            /// The 'proxy_authenticator' manages parsing and tokens required for proxy autentication.
             /**
-             *
-             */
+            * The proxy authenticator handles http proxy authentication. It supports 'Basic', 'NTLM'
+            * and 'Negotiate' authentation - depending on the security context object used. Currently 
+            * there is a Win32 security context which will authenticate using the signed on users
+            * credentials for NTLM and Negotiate. 
+            *
+            * Where the proxy supports multiple different auth schemes, the proxy authenticator will 
+            * select the scheme using the following priority:
+            *   1. Negotiate
+            *   2. NTLM
+            *   3. Digest (not supported just now)
+            *   4. Basic
+            *  
+            */
             template <typename security_context>
             class proxy_authenticator {
             private:
@@ -77,29 +88,74 @@ namespace websocketpp {
             public:
                 typedef lib::shared_ptr<proxy_authenticator> ptr;
 
+                /// Construct a 'proxy_authenticator'
+                /**
+                * Constructs a proxy authenticator fo a given proxy
+                *
+                * @param proxy: Complete proxy URI eg http://proxy.example.com:8080/
+                */
                 proxy_authenticator(std::string const& proxy) : m_proxy(proxy) {
                 }
 
+                /// Set Basice authentication credentials
+                /**
+                * This method sets the basic auth credentials. This can be used for Basic 
+                * authentication, and Digest, however only Basic is supported just now.
+                *
+                * @param username: username used in the auth response.
+                * @param password: password used in the aut response
+                */
                 void set_basic_auth(std::string const& username, std::string const& password)
                 {
                     m_basic_auth.username = username;
                     m_basic_auth.password = password;
                 }
 
+                /// Calculate the next auth token
+                /**
+                * Using the reponse from the proxy, be that the initial response with a list
+                * of auth schemes, or a subsequent response with a scheme and a challenge token,
+                * this method will calculate the next auth token to be used. 
+                *
+                * @param auth_headers: Response headers from 'Proxy-Authenticate'
+                *
+                * Return: ture:  New token calculated, continue auth flow.
+                *         false: No new token calculated - fail the auth flow
+                */
                 bool next_token(std::string const& auth_headers);
 
+                /// Return the next calculated auth token
+                /**
+                * This method will return the next calculated auth token for use in the 
+                * 'Proxy-Authorization' header field.
+                *
+                * Return: New Auth token for 'Proxy-Authorization' header.
+                */
                 std::string get_auth_token() {
                     return build_auth_response();
                 }
 
+                /// To be called after 'proxy_authentication' is complete
+                /**
+                * Marks this authenticator as complete, which means 'get_authenticated_token()
+                * returns the valid token for proxy authentication. 
+                */
                 void set_authenticated() {
                     authenticated = true;
                 }
 
+                /// Returns the authenticated token after auth complete
+                /**
+                * 
+                */
                 std::string get_authenticated_token() {
                     return authenticated ? build_auth_response() : "";
                 }
 
+                /// Returns the proxy uri
+                /**
+                * 
+                */
                 std::string get_proxy() {
                     return m_proxy;
                 }
