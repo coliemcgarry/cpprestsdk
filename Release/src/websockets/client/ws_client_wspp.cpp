@@ -31,6 +31,8 @@
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
+#define WEBSOCKETPP_AUTHENTICATED_PROXY_SUPPORT
+
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
 #if defined(__GNUC__)
