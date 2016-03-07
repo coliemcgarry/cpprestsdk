@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Peter Thorson. All rights reserved.
+ * Copyright (c) 2016, Colie McGarry. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,7 +28,7 @@
 #ifndef WEBSOCKETPP_COMMON_SECURITY_CONTEXT_WIN32_HPP
 #define WEBSOCKETPP_COMMON_SECURITY_CONTEXT_WIN32_HPP
 
-#if defined(_WIN32) && defined(WEBSOCKETPP_AUTHENTICATED_PROXY_SUPPORT)
+#if defined(_WIN32)
 
 #include <websocketpp/base64/base64.hpp>
 
@@ -43,8 +43,7 @@
 namespace websocketpp {
     namespace lib {
         namespace security {
-            namespace win32 {
-
+            namespace platform {
                 class SecurityContext
                 {
                 public:
@@ -190,11 +189,10 @@ namespace websocketpp {
 
                     bool              freeCredentials = false;
                 };
-
-            }   // win32
+            }
         }       // security
     }           // lib
 }               // websocket
 
-#endif // WIN32 && AUTHENTICATED_PROXY
+#endif // WIN32
 #endif // WEBSOCKETPP_COMMON_SECURITY_CONTEXT_WIN32_HPP

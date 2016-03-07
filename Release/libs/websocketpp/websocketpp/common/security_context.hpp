@@ -28,33 +28,21 @@
 #ifndef WEBSOCKETPP_COMMON_SECURITY_CONTEXT_HPP
 #define WEBSOCKETPP_COMMON_SECURITY_CONTEXT_HPP
 
-#include <websocketpp/common/security_context_win32.hpp>
-
 namespace websocketpp {
     namespace lib {
         namespace security {
-            namespace none {
+            class SecurityContext
+            {
+            public:
+                using Ptr = std::shared_ptr<SecurityContext>;
 
-                class SecurityContext
-                {
-                public:
-                    using Ptr = std::shared_ptr<SecurityContext>;
+                static Ptr build(const std::string& , const std::string& )  { return  Ptr(); }
 
-                    static Ptr build(const std::string& , const std::string& )  { return  Ptr(); }
+                SecurityContext(const std::string& , const std::string& )   { }
 
-                    SecurityContext(const std::string& , const std::string& )   { }
-
-                    bool nextAuthToken(const std::string&)                      { return ""; }
-                    std::string getUpdatedToken() const                         { return ""; }
-                };
-            }   // none
-
-#if defined(_WIN32) && defined(WEBSOCKETPP_AUTHENTICATED_PROXY_SUPPORT)
-            typedef websocketpp::lib::security::win32::SecurityContext SecurityContext;
-#else
-            typedef websocketpp::lib::security::none::SecurityContext SecurityContext;
-#endif
-
+                bool nextAuthToken(const std::string&)                      { return ""; }
+                std::string getUpdatedToken() const                         { return ""; }
+            };
         }       // security
     }           // lib
 }               // websocket

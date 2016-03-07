@@ -55,7 +55,7 @@
 #endif
 #endif
 
-#include <websocketpp/config/asio_client.hpp>
+#include <websocketpp/config/asio_client_authenticated_proxy.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
 
@@ -159,7 +159,7 @@ public:
             m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_tls_client());
 
             // Options specific to TLS client.
-            auto &client = m_client->client<websocketpp::config::asio_tls_client>();
+            auto &client = m_client->client<websocketpp::config::asio_tls_client_authenticated_proxy>();
             client.set_tls_init_handler([this](websocketpp::connection_hdl)
             {
                 auto sslContext = websocketpp::lib::shared_ptr<boost::asio::ssl::context>(new boost::asio::ssl::context(boost::asio::ssl::context::sslv23));
@@ -222,7 +222,7 @@ public:
                 }
             });
 
-            return connect_impl<websocketpp::config::asio_tls_client>();
+            return connect_impl<websocketpp::config::asio_tls_client_authenticated_proxy>();
         }
         else
         {
@@ -546,7 +546,7 @@ public:
             websocketpp::lib::error_code ec;
             if (this_client->m_client->is_tls_client())
             {
-                this_client->send_msg_impl<websocketpp::config::asio_tls_client>(this_client, msg, sp_allocated, length, ec);
+                this_client->send_msg_impl<websocketpp::config::asio_tls_client_authenticated_proxy>(this_client, msg, sp_allocated, length, ec);
             }
             else
             {
@@ -614,7 +614,7 @@ public:
                 m_state = CLOSING;
                 if (m_client->is_tls_client())
                 {
-                    close_impl<websocketpp::config::asio_tls_client>(status, reason, ec);
+                    close_impl<websocketpp::config::asio_tls_client_authenticated_proxy>(status, reason, ec);
                 }
                 else
                 {
@@ -748,7 +748,7 @@ private:
         {
             throw std::bad_cast();
         }
-        virtual websocketpp::client<websocketpp::config::asio_tls_client> & tls_client()
+        virtual websocketpp::client<websocketpp::config::asio_tls_client_authenticated_proxy> & tls_client()
         {
             throw std::bad_cast();
         }
@@ -765,12 +765,12 @@ private:
     };
     struct websocketpp_tls_client : websocketpp_client_base
     {
-        websocketpp::client<websocketpp::config::asio_tls_client> & tls_client() override
+        websocketpp::client<websocketpp::config::asio_tls_client_authenticated_proxy> & tls_client() override
         {
             return m_client;
         }
         bool is_tls_client() const override { return true; }
-        websocketpp::client<websocketpp::config::asio_tls_client> m_client;
+        websocketpp::client<websocketpp::config::asio_tls_client_authenticated_proxy> m_client;
     };
 
     websocketpp::connection_hdl m_con;
