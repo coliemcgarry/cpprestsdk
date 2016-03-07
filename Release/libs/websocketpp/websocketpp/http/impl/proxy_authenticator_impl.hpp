@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2016, Colie McGarry. All rights reserved.
- *
+* Copyright (c) 2016, Peter Thorson. All rights reserved.
+*
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -23,6 +23,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * The initial version of this Security Context policy was contributed to the WebSocket++
+ * project by Colie McGarry.
  */
 
 #ifndef HTTP_PROXY_AUTHENTICATOR_IMPL_HPP
