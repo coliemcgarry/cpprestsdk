@@ -36,7 +36,7 @@
 #include <websocketpp/config/asio_no_tls_client.hpp>
 
 #include <websocketpp/http/proxy_authenticator.hpp>
-#include <websocketpp/common/security_context_win32.hpp>
+#include <websocketpp/common/impl/security_context.hpp>
 
 // Define TLS config
 namespace websocketpp {
