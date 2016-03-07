@@ -280,32 +280,39 @@ namespace websocketpp {
             template <typename security_context>
             bool proxy_authenticator<security_context>::next_token(const std::string& auth_headers)
             {
-                auth_parser::AuthScheme auth_scheme;
+                auth_parser::AuthScheme auth_scheme = auth_parser::select_auth_scheme(auth_headers);
 
-                if (!m_security_context) {
-                    auth_scheme = auth_parser::select_auth_scheme(auth_headers);
-
-                    if (!auth_scheme.is_known()) {
-                        return false;
-                    }
-
-                    m_auth_scheme_name = auth_scheme.get_name();
-
-                    m_security_context = security_context::build(m_proxy, m_auth_scheme_name);
-                }
-                else {
-                    auth_scheme = auth_parser::parse_auth_scheme(auth_headers);
-                }
-
-                if (!m_security_context || !auth_scheme.is_known()) {
+                if (!auth_scheme.is_known()) {
                     return false;
                 }
 
-                m_security_context->nextAuthToken(auth_scheme.get_challenge());
+                if (auth_scheme.is_basic())
+                {
+                    m_auth_token = base64_encode(m_basic_auth.username + ":" + m_basic_auth.password);
 
-                m_auth_token       = m_security_context->getUpdatedToken();
+                    return !m_basic_auth.username.empty();
+                }
 
-                return m_auth_token.empty() ? false : true;
+                if (auth_scheme.is_ntlm() || auth_scheme.is_negotiate())
+                {
+                    if (!m_security_context) {
+                        m_auth_scheme_name = auth_scheme.get_name();
+
+                        m_security_context = security_context::build(m_proxy, m_auth_scheme_name);
+                    }
+
+                    if (!m_security_context) {
+                        return false;
+                    }
+
+                    m_security_context->nextAuthToken(auth_scheme.get_challenge());
+
+                    m_auth_token = m_security_context->getUpdatedToken();
+
+                    return m_auth_token.empty() ? false : true;
+                }
+
+                return false;
             }
         }   // namespace proxy
     }       // namespace http

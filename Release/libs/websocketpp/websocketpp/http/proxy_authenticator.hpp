@@ -55,6 +55,13 @@ namespace websocketpp {
                 std::string m_auth_token;
                 bool authenticated=false;
 
+                struct
+                {
+                    std::string username;
+                    std::string password;
+
+                } m_basic_auth;
+
                 security_context_ptr m_security_context;
 
                 std::string build_auth_response() {
@@ -68,10 +75,16 @@ namespace websocketpp {
             public:
                 typedef lib::shared_ptr<proxy_authenticator> ptr;
 
-                proxy_authenticator(const std::string& proxy) : m_proxy(proxy) {
+                proxy_authenticator(std::string const& proxy) : m_proxy(proxy) {
                 }
 
-                bool next_token(const std::string& auth_headers);
+                void set_basic_auth(std::string const& username, std::string const& password)
+                {
+                    m_basic_auth.username = username;
+                    m_basic_atuh.password = password;
+                }
+
+                bool next_token(std::string const& auth_headers);
 
                 std::string get_auth_token() {
                     return build_auth_response();
