@@ -113,6 +113,20 @@ BOOST_AUTO_TEST_CASE(auth_scheme_parser) {
 
     BOOST_CHECK(auth_scheme.is_negotiate());
     BOOST_CHECK(auth_scheme.get_challenge().empty());
+
+    // Unknown Auth Scheme fails the parse for all schemes
+    auth_headers = "Digest, NTLM, Basic realm=\"some realm\",type=1, NegotiateX";
+
+    auth_schemes = websocketpp::http::proxy::auth_parser::parse_auth_schemes(auth_headers.begin(), auth_headers.end());
+
+    BOOST_CHECK(auth_schemes.empty());
+
+    // Empty Parameter value for a basic auth fails the parse
+    auth_headers = "Digest, NTLM, Basic realm=\"some realm\",type=, Negotiate";
+
+    auth_schemes = websocketpp::http::proxy::auth_parser::parse_auth_schemes(auth_headers.begin(), auth_headers.end());
+
+    BOOST_CHECK(auth_schemes.empty());
 }
 
 class fake_security_context {

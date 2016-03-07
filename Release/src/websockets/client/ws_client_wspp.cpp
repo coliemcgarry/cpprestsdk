@@ -295,6 +295,12 @@ public:
         if (proxy.is_specified())
         {
             client.set_proxy(utility::conversions::to_utf8string(proxy.address().to_string()));
+
+            const auto &cred = proxy.credentials();
+            if (cred.is_set())
+            {
+                client.set_proxy_basic_auth(utility::conversions::to_utf8string(cred.username()), utility::conversions::to_utf8string(*cred.decrypt()));
+            }
         }
 
         // Get the connection handle to save for later, have to create temporary

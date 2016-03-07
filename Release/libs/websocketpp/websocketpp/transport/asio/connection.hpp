@@ -235,9 +235,10 @@ public:
             return;
         }
 
-        // TODO: username can't contain ':'
-        std::string val = "Basic "+base64_encode(username + ":" + password);
-        m_proxy_data->req.replace_header("Proxy-Authorization",val);
+        if (m_proxy_data->proxy_authenticator) {
+            m_proxy_data->proxy_authenticator->set_basic_auth(username, password);
+        }
+
         ec = lib::error_code();
     }
 

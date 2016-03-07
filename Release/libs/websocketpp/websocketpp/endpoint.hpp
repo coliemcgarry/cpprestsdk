@@ -482,6 +482,12 @@ public:
         m_proxy_authenticator = lib::make_shared<proxy_authenticator_type>(proxy);
     }
 
+    void set_proxy_basic_auth(std::string const& username, std::string const& password) {
+        if (m_proxy_authenticator) {
+            m_proxy_authenticator->set_basic_auth(username, password);
+        }
+    }
+
     /*************************************/
     /* Connection pass through functions */
     /*************************************/

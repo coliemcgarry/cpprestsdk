@@ -85,8 +85,6 @@ endpoint<connection,config>::create_connection() {
     if (m_proxy_authenticator)
     {
         con->set_proxy_authenticator(m_proxy_authenticator);
-
-        //con->set_proxy_auth_token(m_proxy_authenticator->get_authenticated_token());
     }
 
     lib::error_code ec;

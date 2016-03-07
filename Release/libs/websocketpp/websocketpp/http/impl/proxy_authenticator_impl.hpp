@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Peter Thorson. All rights reserved.
+ * Copyright (c) 2016, Colie McGarry. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,6 +28,8 @@
 #ifndef HTTP_PROXY_AUTHENTICATOR_IMPL_HPP
 #define HTTP_PROXY_AUTHENTICATOR_IMPL_HPP
 
+#include <websocketpp/base64/base64.hpp>
+
 #include <string>
 #include <algorithm>
 #include <locale>
@@ -49,6 +51,9 @@ namespace websocketpp {
                 * BWS is basically 'optional' white space
                 *
                 * token68        = 1*( ALPHA / DIGIT / "-" / "." / "_" / "~" / "+" / "/" ) *"="
+                *
+                *
+                * Note: Digest is not implemented - we do parse, but we do not calculate tokens (yet)!
                 */
 
                 inline bool icompareCh(char lhs, char rhs) {
@@ -156,7 +161,10 @@ namespace websocketpp {
 
                             cursor = next.second;
 
-                            if (*cursor != '=') {
+                            if (cursor == end || *cursor != '=') {
+                                // Expected a '=' char as part of a key value pair
+                                m_type = Unknown; 
+
                                 return cursor;
                             }
 
@@ -164,6 +172,9 @@ namespace websocketpp {
                             ++cursor;
 
                             if (cursor == end) {
+                                // No Value
+                                m_type = Unknown;
+
                                 return cursor;
                             }
 
@@ -174,6 +185,9 @@ namespace websocketpp {
                             }
 
                             if (next.first.empty()) {
+                                // Expected a '=' char as part of a key value pair
+                                m_type = Unknown;
+
                                 return cursor;
                             }
 
@@ -288,6 +302,9 @@ namespace websocketpp {
 
                 if (auth_scheme.is_basic())
                 {
+                    m_auth_scheme_name = auth_scheme.get_name();
+
+                    // TODO: username can't contain ':' (Comment copied from old basic auth implementation)
                     m_auth_token = base64_encode(m_basic_auth.username + ":" + m_basic_auth.password);
 
                     return !m_basic_auth.username.empty();

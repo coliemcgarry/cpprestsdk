@@ -81,7 +81,7 @@ namespace websocketpp {
                 void set_basic_auth(std::string const& username, std::string const& password)
                 {
                     m_basic_auth.username = username;
-                    m_basic_atuh.password = password;
+                    m_basic_auth.password = password;
                 }
 
                 bool next_token(std::string const& auth_headers);
