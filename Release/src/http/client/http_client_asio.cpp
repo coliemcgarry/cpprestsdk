@@ -883,11 +883,11 @@ private:
         
         using namespace web::http::client::details;
 
-        auto pinningCallback = [this](const std::string& host, const std::string& key) {
+        auto pinningCallback = [this, host](const std::string& host, const std::string& key) {
             return m_http_client->client_config().invoke_pinning_callback(host, key);
         };
 
-        auto pinningResult = is_certificate_pinned(m_config.server_name(), verifyCtx, pinningCallback);
+        auto pinningResult = is_certificate_pinned(host, verifyCtx, pinningCallback);
 
         if (pinningResult == PinningResult::NotPinned)
         {
