@@ -123,10 +123,11 @@ static struct _pplx_g_sched_t
 
         ::pplx::details::_Scoped_spin_lock lock(m_spinlock);
 
-        if (m_scheduler != nullptr)
-        {
-            throw invalid_operation("Scheduler is already initialized");
-        }
+        // For Unit Tests, we want to override the the scheduler on OSX - removing this throw
+        //if (m_scheduler != nullptr)
+        //{
+        //    throw invalid_operation("Scheduler is already initialized");
+        //}
 
         m_scheduler = std::move(scheduler);
     }
